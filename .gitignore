@@ -1,0 +1,44 @@
+# --- Java / Maven ---
+/target/
+!.mvn/wrapper/maven-wrapper.jar
+.mvn/timing.properties
+
+# Logs
+*.log
+spring.log
+
+# --- IDEs ---
+# IntelliJ
+.idea/
+*.iml
+*.iws
+out/
+
+# Eclipse
+.project
+.classpath
+.settings/
+.factorypath
+
+# VS Code
+.vscode/
+
+# macOS / Windows
+.DS_Store
+Thumbs.db
+
+# --- Vaadin / Frontend ---
+node_modules/
+.pnpm-store/
+.vaadin/
+frontend/generated/
+# Si usas Vite caches locales
+.vite/
+
+# Coverage / tooling
+coverage/
+dist/
+
+# --- Misc ---
+*.swp
+*.tmp
