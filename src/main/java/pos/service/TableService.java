@@ -1,7 +1,6 @@
 package pos.service;
 
 import org.springframework.stereotype.Service;
-import pos.repository.TableRepository;
 import pos.domain.TableSpot;
 
 import java.util.List;
