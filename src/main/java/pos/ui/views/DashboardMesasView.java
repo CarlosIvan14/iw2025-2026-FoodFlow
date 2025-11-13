@@ -14,6 +14,7 @@ import pos.domain.TableSpot;
 import pos.service.OrderService;
 import pos.service.TableService;
 import pos.ui.MainLayout;
+import com.vaadin.flow.component.html.Image;
 
 import java.util.List;
 
@@ -34,14 +35,22 @@ public class DashboardMesasView extends VerticalLayout implements RouteGuard {
     add(title, canvas);
 
     List<TableSpot> all = tables.all();
+
+  
+
     for (var t : all) {
-      var btn = new Button(t.name());
-      btn.addClassName("mesa-btn");
-      btn.getStyle().set("left", t.x() + "px");
-      btn.getStyle().set("top", t.y() + "px");
-      btn.addClickListener(e -> showOrdersFor(t, orders));
-      canvas.add(btn);
+    var btn = new Button();
+    btn.addClassName("mesa-btn");
+    btn.getElement().setProperty("innerHTML",
+        "<img src='icons/mesa.png' class='mesa-icon'>" +
+        "<span class='mesa-label'>" + t.name() + "</span>"
+    );
+    btn.getStyle().set("left", t.x() + "px");
+    btn.getStyle().set("top", t.y() + "px");
+    btn.addClickListener(e -> showOrdersFor(t, orders));
+    canvas.add(btn);
     }
+
   }
 
   private void showOrdersFor(TableSpot t, OrderService orders) {
