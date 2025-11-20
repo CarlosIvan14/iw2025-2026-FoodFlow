@@ -28,6 +28,12 @@ public class TableSpot {
     @Column(name = "capacity", nullable = false)
     private Integer capacity; // capacidad estimada
 
+    @Column(name = "pos_x")
+    private Integer x = 0;
+
+    @Column(name = "pos_y")
+    private Integer y = 0;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "state", nullable = false, length = 20)
     @Builder.Default

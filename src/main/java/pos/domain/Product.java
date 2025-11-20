@@ -20,7 +20,7 @@ public class Product {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_producto")
+    @Column(name = "id")
     private Long id;
 
     @NotBlank
@@ -30,6 +30,10 @@ public class Product {
 
     @Column(name = "descripcion", columnDefinition = "text")
     private String description;
+
+    @NotBlank
+    @Column(name = "categoria", length = 50)
+    private String category;
 
     @DecimalMin(value = "0.0", inclusive = true)
     @Column(name = "precio", nullable = false, precision = 12, scale = 2)

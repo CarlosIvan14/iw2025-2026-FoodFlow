@@ -25,9 +25,9 @@ import java.util.stream.Collectors;
 @PageTitle("Analytics")
 @NpmPackage(value = "chart.js", version = "4.4.4")
 @JsModule("./charts-setup.js")
-public class AnalyticsAdminView extends VerticalLayout implements RouteGuard {
+public class AnalyticsAdminView extends Composite<VerticalLayout> implements RouteGuard {
 
- @Override
+//  @Override
   protected VerticalLayout initContent() {
     VerticalLayout root = new VerticalLayout();
     root.addClassName("analytics-view");

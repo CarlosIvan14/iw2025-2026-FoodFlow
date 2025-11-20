@@ -71,5 +71,13 @@ public class Order {
   void onUpdate() {
     updatedAt = OffsetDateTime.now();
   }
+
+  public Long getTableId() {
+      return serviceSession != null ? serviceSession.getId() : null;
+  }
+
+  public BigDecimal getTotal() {
+    return total;
+  }
 }
 

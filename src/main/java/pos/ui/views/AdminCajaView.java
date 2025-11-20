@@ -8,6 +8,7 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import pos.auth.RouteGuard;
 import pos.ui.MainLayout;
+import pos.service.CashService;
 
 @PageTitle("Caja")
 @Route(value = "admin/caja", layout = MainLayout.class)

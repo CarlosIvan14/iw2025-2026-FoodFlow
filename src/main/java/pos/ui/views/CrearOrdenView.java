@@ -16,6 +16,10 @@ import pos.auth.RouteGuard;
 import pos.domain.Product;
 import pos.domain.TableSpot;
 import pos.ui.MainLayout;
+import pos.service.TableService;
+import pos.service.MenuService;
+import pos.service.OrderService;
+import pos.domain.OrderItem;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,66 +42,83 @@ public class CrearOrdenView extends VerticalLayout implements RouteGuard {
     title.addClassName("orden-title");
 
     // --- Selección de mesa ---
-    var mesa = new ComboBox<TableSpot>("Mesa");
-    mesa.setItems(tables.all());
-    mesa.setItemLabelGenerator(TableSpot::name);
-    mesa.addClassName("orden-combobox");
+    var tableSelect = new com.vaadin.flow.component.combobox.ComboBox<TableSpot>("Mesa");
+    tableSelect.setItems(tables.all());
+    tableSelect.setItemLabelGenerator(TableSpot::getCode);
+    tableSelect.addClassName("orden-combobox");
 
     // --- Tabla de productos ---
-    var grid = new Grid<>(Product.class, false);
+    var grid = new Grid<>(OrderItem.class, false); // Changed to OrderItem
     grid.addClassName("orden-grid");
-    grid.addColumn(Product::name).setHeader("Producto").setAutoWidth(true);
-    grid.addColumn(Product::price).setHeader("Precio").setAutoWidth(true);
+    grid.addColumn(OrderItem::productName).setHeader("Producto");
+    grid.addColumn(OrderItem::qty).setHeader("Cant");
+    grid.addColumn(OrderItem::unitPrice).setHeader("Precio U.");
+    grid.addColumn(i -> i.unitPrice().multiply(java.math.BigDecimal.valueOf(i.qty())))
+        .setHeader("Subtotal");
 
-    grid.addComponentColumn(p -> {
-      var qty = new IntegerField();
-      qty.setMin(1);
-      qty.setValue(1);
-      qty.setWidth("80px");
-      qty.addClassName("orden-cantidad");
+    // Product selection and add to order
+    var productSelect = new ComboBox<Product>("Producto");
+    productSelect.setItems(menu.list());
+    productSelect.setItemLabelGenerator(Product::getName);
+    productSelect.addClassName("orden-product-select");
 
-      var note = new TextField();
-      note.setPlaceholder("Nota opcional");
-      note.addClassName("orden-nota");
+    var qty = new IntegerField("Cantidad");
+    qty.setMin(1);
+    qty.setValue(1);
+    qty.setWidth("80px");
+    qty.addClassName("orden-cantidad");
 
-      var add = new Button("Añadir", e -> {
-        items.add(new OrderItem(p.id(), p.name(), qty.getValue(), p.price(), note.getValue()));
-        Notification.show("Añadido " + p.name());
-      });
-      add.addClassName("orden-add-btn");
+    var note = new TextField("Nota");
+    note.setPlaceholder("Nota opcional");
+    note.addClassName("orden-nota");
 
-      var hl = new HorizontalLayout(qty, note, add);
-      hl.addClassName("orden-add-row");
-      return hl;
+    var btnAdd = new Button("Agregar", e -> {
+      var p = productSelect.getValue();
+      var q = qty.getValue();
+      if (p != null && q != null && q > 0) {
+        items.add(new OrderItem(p.getId(), p.getName(), q, p.getPrice(), note.getValue()));
+        grid.setItems(items); // refresh
+        Notification.show("Agregado: " + p.getName());
+        productSelect.clear();
+        qty.setValue(1);
+        note.clear();
+      } else {
+        Notification.show("Selecciona un producto y cantidad válida.");
+      }
     });
+    btnAdd.addClassName("orden-add-btn");
 
-    grid.setItems(menu.list());
+    var addProductLayout = new HorizontalLayout(productSelect, qty, note, btnAdd);
+    addProductLayout.addClassName("orden-add-product-layout");
+    addProductLayout.setAlignItems(Alignment.BASELINE);
 
     // --- Botones principales ---
-    var btnCrear = new Button("Crear Pedido", e -> {
-      if (mesa.getValue() == null) {
-        Notification.show("Selecciona mesa");
+    var btnCreate = new Button("Crear Orden", e -> {
+      if (tableSelect.getValue() == null) {
+        Notification.show("Selecciona una mesa");
         return;
       }
       if (items.isEmpty()) {
-        Notification.show("Sin productos");
+        Notification.show("Agrega productos");
         return;
       }
-      var o = orders.createTableOrder(mesa.getValue().id(), items, auth.currentUser());
-      Notification.show("Creado pedido #" + o.getId() + " total $" + o.total());
+      // Mock creation
+      orders.createTableOrder(tableSelect.getValue().getId(), items, auth.currentUser()); // Adjusted to use existing method
+      Notification.show("Orden creada para mesa " + tableSelect.getValue().getId());
       items.clear();
+      grid.setItems(items);
     });
-    btnCrear.addClassName("orden-crear-btn");
+    btnCreate.addClassName("orden-crear-btn");
 
     var btnDividir = new Button("Dividir cuenta (50/50 demo)", e -> {
-      double total = items.stream().mapToDouble(i -> i.unitPrice() * i.qty()).sum();
+      double total = items.stream().mapToDouble(i -> i.unitPrice().doubleValue() * i.qty()).sum(); // Use doubleValue()
       Notification.show("Dos cuentas de: $" + (total / 2.0));
     });
     btnDividir.addClassName("orden-dividir-btn");
 
-    var buttons = new HorizontalLayout(btnCrear, btnDividir);
+    var buttons = new HorizontalLayout(btnCreate, btnDividir);
     buttons.addClassName("orden-buttons");
 
-    add(title, mesa, grid, buttons);
+    add(title, tableSelect, addProductLayout, grid, buttons);
   }
 }

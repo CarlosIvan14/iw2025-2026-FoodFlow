@@ -13,6 +13,10 @@ import pos.domain.Order;
 import pos.domain.TableSpot;
 import pos.ui.MainLayout;
 import com.vaadin.flow.component.html.Image;
+import pos.service.TableService;
+import pos.service.OrderService;
+import pos.service.MenuService;
+import pos.domain.OrderItem;
 
 import java.util.List;
 
@@ -41,10 +45,10 @@ public class DashboardMesasView extends VerticalLayout implements RouteGuard {
     btn.addClassName("mesa-btn");
     btn.getElement().setProperty("innerHTML",
         "<img src='icons/mesa.png' class='mesa-icon'>" +
-        "<span class='mesa-label'>" + t.name() + "</span>"
+        "<span class='mesa-label'>" + t.getCode() + "</span>"
     );
-    btn.getStyle().set("left", t.x() + "px");
-    btn.getStyle().set("top", t.y() + "px");
+    btn.getStyle().set("left", t.getX() + "px");
+    btn.getStyle().set("top", t.getY() + "px");
     btn.addClickListener(e -> showOrdersFor(t, orders));
     canvas.add(btn);
     }
@@ -53,11 +57,11 @@ public class DashboardMesasView extends VerticalLayout implements RouteGuard {
 
   private void showOrdersFor(TableSpot t, OrderService orders) {
     var dialog = new Dialog();
-    dialog.setHeaderTitle("Pedidos de " + t.name());
+    dialog.setHeaderTitle("Pedidos de " + t.getCode());
 
     var wrap = new VerticalLayout();
     orders.all().stream()
-        .filter(o -> t.id().equals(o.getTableId()))
+        .filter(o -> t.getId().equals(o.getTableId()))
         .forEach(o -> wrap.add(orderCard(o, orders)));
 
     if (wrap.getComponentCount() == 0)
@@ -73,15 +77,15 @@ public class DashboardMesasView extends VerticalLayout implements RouteGuard {
     card.addClassName("pedido-card");
     card.add(new Span("Pedido #" + o.getId() +
         " | Estado: " + o.getStatus() +
-        " | Total: $" + o.total()));
+        " | Total: $" + o.getTotal()));
 
     var btnPrep = new Button("Preparando", e -> {
-      orders.updateStatus(o.getId(), Order.Status.PREPARANDO);
+      orders.updateStatus(o.getId(), pos.domain.OrderStatus.IN_PREPARATION);
       card.getElement().callJsFunction("remove");
     });
 
     var btnCerrar = new Button("Cerrar", e -> {
-      orders.updateStatus(o.getId(), Order.Status.CERRADO);
+      orders.updateStatus(o.getId(), pos.domain.OrderStatus.DELIVERED);
       card.getElement().callJsFunction("remove");
     });
 

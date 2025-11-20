@@ -9,6 +9,7 @@ import com.vaadin.flow.router.Route;
 import pos.auth.RouteGuard;
 import pos.domain.Order;
 import pos.ui.MainLayout;
+import pos.service.OrderService;
 
 @PageTitle("Cocina")
 @Route(value = "cocina", layout = MainLayout.class)
@@ -31,11 +32,11 @@ public class CocinaView extends VerticalLayout implements RouteGuard {
     grid.addColumn(o -> o.getTableId() == null ? "" : o.getTableId()).setHeader("Mesa");
     grid.addColumn(Order::getCreatedAt).setHeader("Creado");
     grid.addColumn(Order::getStatus).setHeader("Estado");
-    grid.addColumn(Order::total).setHeader("Total");
+    grid.addColumn(Order::getTotal).setHeader("Total");
 
     grid.addComponentColumn(o -> {
       var btn = new Button("✔ LISTO", e -> {
-        orders.updateStatus(o.getId(), Order.Status.LISTO);
+        orders.updateStatus(o.getId(), pos.domain.OrderStatus.LISTO);
         grid.setItems(orders.kitchenQueue());
       });
       btn.addClassName("cocina-btn");

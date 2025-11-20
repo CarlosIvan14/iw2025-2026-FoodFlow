@@ -13,6 +13,9 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import pos.auth.AuthService;
 import pos.domain.Product;
+import pos.domain.OrderItem;
+import pos.service.MenuService;
+import pos.service.OrderService;
 import pos.ui.MainLayout;
 
 import java.util.ArrayList;
@@ -39,9 +42,9 @@ public class MenuView extends VerticalLayout {
     // ✅ Primero inicializamos el grid
     grid = new Grid<>(Product.class, false);
     grid.addClassName("menu-grid");
-    grid.addColumn(Product::name).setHeader("Producto");
-    grid.addColumn(Product::category).setHeader("Categoría");
-    grid.addColumn(Product::price).setHeader("Precio");
+    grid.addColumn(Product::getName).setHeader("Producto");
+    grid.addColumn(Product::getCategory).setHeader("Categoría");
+    grid.addColumn(Product::getPrice).setHeader("Precio");
     grid.addComponentColumn(p -> {
       var qty = new IntegerField();
       qty.setValue(1);
@@ -50,8 +53,8 @@ public class MenuView extends VerticalLayout {
       qty.setWidth("80px");
 
       var addBtn = new Button("Añadir", ev -> {
-        cart.add(new OrderItem(p.id(), p.name(), qty.getValue(), p.price(), ""));
-        Notification.show(p.name() + " x" + qty.getValue() + " añadido al carrito");
+        cart.add(new OrderItem(p.getId(), p.getName(), qty.getValue(), p.getPrice(), ""));
+        Notification.show(p.getName() + " x" + qty.getValue() + " añadido al carrito");
       });
       addBtn.addClassName("menu-add-btn");
 
@@ -103,7 +106,7 @@ public class MenuView extends VerticalLayout {
       var o = orders.createCustomerOrder(
         delivery.getValue(), address.getValue(), phone.getValue(), cart, auth.currentUser()
       );
-      Notification.show("Pedido realizado #" + o.getId() + " — Total: $" + o.total());
+      Notification.show("Pedido realizado #" + o.getId() + " — Total: $" + o.getTotal());
       cart.clear();
     });
     btnOrder.addClassName("menu-btn-primary");

@@ -8,6 +8,7 @@ import com.vaadin.flow.router.Route;
 import pos.auth.RouteGuard;
 import pos.domain.Product;
 import pos.ui.MainLayout;
+import pos.service.MenuService;
 
 @PageTitle("Inventario")
 @Route(value = "admin/inventario", layout = MainLayout.class)
@@ -26,10 +27,10 @@ public class AdminInventarioView extends VerticalLayout implements RouteGuard {
 
     var grid = new Grid<>(Product.class, false);
     grid.addClassName("inventario-grid");
-    grid.addColumn(Product::id).setHeader("ID").setAutoWidth(true);
-    grid.addColumn(Product::name).setHeader("Nombre").setAutoWidth(true);
-    grid.addColumn(Product::price).setHeader("Precio").setAutoWidth(true);
-    grid.addColumn(Product::category).setHeader("Categoría").setAutoWidth(true);
+    grid.addColumn(Product::getId).setHeader("ID").setAutoWidth(true);
+    grid.addColumn(Product::getName).setHeader("Producto");
+    grid.addColumn(Product::getPrice).setHeader("Precio");
+    grid.addColumn(Product::getCategory).setHeader("Categoría").setAutoWidth(true);
 
     grid.setItems(menu.list());
 
