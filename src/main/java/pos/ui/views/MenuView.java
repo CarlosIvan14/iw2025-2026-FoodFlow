@@ -12,10 +12,7 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import pos.auth.AuthService;
-import pos.domain.OrderItem;
 import pos.domain.Product;
-import pos.service.MenuService;
-import pos.service.OrderService;
 import pos.ui.MainLayout;
 
 import java.util.ArrayList;

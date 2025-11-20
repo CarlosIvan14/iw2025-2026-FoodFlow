@@ -7,7 +7,6 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import pos.auth.RouteGuard;
-import pos.service.CashService;
 import pos.ui.MainLayout;
 
 @PageTitle("Caja")

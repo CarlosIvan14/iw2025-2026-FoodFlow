@@ -13,19 +13,15 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import pos.auth.AuthService;
 import pos.auth.RouteGuard;
-import pos.domain.OrderItem;
 import pos.domain.Product;
 import pos.domain.TableSpot;
-import pos.service.MenuService;
-import pos.service.OrderService;
-import pos.service.TableService;
 import pos.ui.MainLayout;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @PageTitle("Crear Orden")
-@Route(value = "ordenes/nueva", layout = MainLayout.class)
+@Route(value = "ordenes/crear", layout = MainLayout.class)
 public class CrearOrdenView extends VerticalLayout implements RouteGuard {
 
   private final List<OrderItem> items = new ArrayList<>();

@@ -7,7 +7,6 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import pos.auth.RouteGuard;
 import pos.domain.Product;
-import pos.service.MenuService;
 import pos.ui.MainLayout;
 
 @PageTitle("Inventario")

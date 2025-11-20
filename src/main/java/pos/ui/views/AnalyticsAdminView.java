@@ -13,6 +13,7 @@ import com.vaadin.flow.theme.lumo.LumoUtility;
 import com.vaadin.flow.component.dependency.NpmPackage;
 import com.vaadin.flow.component.dependency.JsModule;
 import pos.ui.MainLayout;
+import pos.auth.RouteGuard;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -20,14 +21,13 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@PageTitle("Análisis de negocio")
-@Route(value = "reports", layout = MainLayout.class)
-@RouteAlias(value = "reports", layout = MainLayout.class)
+@Route(value = "admin/analytics", layout = MainLayout.class)
+@PageTitle("Analytics")
 @NpmPackage(value = "chart.js", version = "4.4.4")
 @JsModule("./charts-setup.js")
-public class AnalyticsAdminView extends Composite<VerticalLayout> {
+public class AnalyticsAdminView extends VerticalLayout implements RouteGuard {
 
-  @Override
+ @Override
   protected VerticalLayout initContent() {
     VerticalLayout root = new VerticalLayout();
     root.addClassName("analytics-view");

@@ -1,3 +1,9 @@
 package pos.domain;
 
-public enum Role { ADMIN, MESERO, COCINA, CLIENTE }
+public enum Role {
+    ADMIN,
+    WAITER,      // MESERO
+    COOK,        // COCINERO
+    COURIER,     // REPARTIDOR
+    CLIENT       // CLIENTE
+}

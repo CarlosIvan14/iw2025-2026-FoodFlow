@@ -11,14 +11,12 @@ import com.vaadin.flow.router.Route;
 import pos.auth.RouteGuard;
 import pos.domain.Order;
 import pos.domain.TableSpot;
-import pos.service.OrderService;
-import pos.service.TableService;
 import pos.ui.MainLayout;
 import com.vaadin.flow.component.html.Image;
 
 import java.util.List;
 
-@PageTitle("Dashboard Mesas")
+@PageTitle("Mesas")
 @Route(value = "mesas", layout = MainLayout.class)
 public class DashboardMesasView extends VerticalLayout implements RouteGuard {
 

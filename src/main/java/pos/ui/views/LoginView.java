@@ -1,55 +1,63 @@
 package pos.ui.views;
 
-import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.combobox.ComboBox;
-import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.login.LoginForm;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.router.RouterLink;
 import pos.auth.AuthService;
 import pos.auth.RouteGuard;
-import pos.domain.Role;
-import pos.ui.MainLayout;
 
 @PageTitle("Login")
-@Route(value = "login", layout = MainLayout.class)
+@Route(value = "login")
 public class LoginView extends VerticalLayout implements RouteGuard {
 
-  public LoginView(AuthService auth) {
-    addClassName("login-view");
-    setSizeFull();
-    setAlignItems(Alignment.CENTER);
-    setJustifyContentMode(JustifyContentMode.CENTER);
+    private final LoginForm login = new LoginForm();
+    private final AuthService authService;
 
-    // === Título ===
-    var title = new H2("Iniciar Sesión");
-    title.addClassName("login-title");
+    public LoginView(AuthService authService) {
+        this.authService = authService;
 
-    // === Campos de usuario y rol ===
-    var user = new TextField("Usuario");
-    user.addClassName("login-input");
-    user.setValue("carlos");
+        addClassName("login-view");
+        setSizeFull();
+        setAlignItems(Alignment.CENTER);
+        setJustifyContentMode(JustifyContentMode.CENTER);
 
-    var role = new ComboBox<Role>("Rol");
-    role.setItems(Role.values());
-    role.setValue(Role.MESERO);
-    role.addClassName("login-select");
+        login.addLoginListener(e -> {
+            try {
+                authService.authenticate(e.getUsername(), e.getPassword());
+                getUI().ifPresent(ui -> ui.navigate(""));
+            } catch (AuthService.AuthException ex) {
+                login.setError(true);
+            }
+        });
+        
+        // Traducción básica al español
+        login.setI18n(createSpanishI18n());
 
-    // === Botón ===
-    var btn = new Button("Entrar", e -> {
-      auth.login(user.getValue(), role.getValue().name());
-      getUI().ifPresent(ui -> ui.navigate(""));
-    });
-    btn.addClassName("login-btn");
+        add(login);
+        add(new RouterLink("¿No tienes cuenta? Regístrate aquí", RegisterView.class));
+    }
 
-    // === Layout principal ===
-    var form = new VerticalLayout(title, user, role, btn);
-    form.addClassName("login-form");
-    form.setAlignItems(Alignment.CENTER);
-    form.setSpacing(true);
-    form.setPadding(true);
-
-    add(form);
-  }
+    @Override
+    public void beforeEnter(BeforeEnterEvent event) {
+        if (authService.isAuthenticated()) {
+            event.forwardTo("");
+        }
+    }
+    
+    private com.vaadin.flow.component.login.LoginI18n createSpanishI18n() {
+        var i18n = com.vaadin.flow.component.login.LoginI18n.createDefault();
+        
+        i18n.getForm().setTitle("Iniciar Sesión");
+        i18n.getForm().setUsername("Correo");
+        i18n.getForm().setPassword("Contraseña");
+        i18n.getForm().setSubmit("Entrar");
+        i18n.getForm().setForgotPassword("Olvidé mi contraseña");
+        i18n.getErrorMessage().setTitle("Error de acceso");
+        i18n.getErrorMessage().setMessage("Correo o contraseña incorrectos");
+        
+        return i18n;
+    }
 }

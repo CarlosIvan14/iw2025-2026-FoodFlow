@@ -8,7 +8,6 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import pos.auth.RouteGuard;
 import pos.domain.Order;
-import pos.service.OrderService;
 import pos.ui.MainLayout;
 
 @PageTitle("Cocina")

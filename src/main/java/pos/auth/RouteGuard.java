@@ -10,7 +10,8 @@ public interface RouteGuard extends BeforeEnterObserver {
     var us = VaadinSession.getCurrent().getAttribute(AuthService.UserSession.class);
     var path = event.getLocation().getPath();
     // P?blico: login, register, menu
-    if (path.startsWith("login") || path.startsWith("register") || path.startsWith("menu")) return;
+    // Público: login, register, menu (root)
+    if (path.isEmpty() || path.startsWith("login") || path.startsWith("register") || path.startsWith("menu")) return;
     if (us == null) event.rerouteTo("login");
   }
 }
