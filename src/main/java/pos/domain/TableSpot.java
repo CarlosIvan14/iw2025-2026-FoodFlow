@@ -19,6 +19,9 @@ public class TableSpot {
     @Column(name = "id_table_spot")
     private Long id;
 
+
+
+
     @NotBlank
     @Size(max = 20)
     @Column(name = "code", nullable = false, unique = true, length = 20)

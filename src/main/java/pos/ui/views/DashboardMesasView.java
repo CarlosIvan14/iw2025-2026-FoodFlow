@@ -31,28 +31,64 @@ public class DashboardMesasView extends VerticalLayout implements RouteGuard {
     var title = new H2("Mapa de Mesas");
     title.addClassName("mesas-title");
 
+    var addBtn = new Button("Agregar Mesa");
+    addBtn.addClickListener(e -> showAddTableDialog(tables));
+
+    var header = new Div(title, addBtn);
+    header.addClassName("mesas-header");
+    header.getStyle().set("display", "flex");
+    header.getStyle().set("justify-content", "space-between");
+    header.getStyle().set("align-items", "center");
+    header.getStyle().set("width", "100%");
+
     var canvas = new Div();
     canvas.addClassName("mesas-canvas");
 
-    add(title, canvas);
+    add(header, canvas);
 
     List<TableSpot> all = tables.all();
 
-  
-
     for (var t : all) {
-    var btn = new Button();
-    btn.addClassName("mesa-btn");
-    btn.getElement().setProperty("innerHTML",
-        "<img src='icons/mesa.png' class='mesa-icon'>" +
-        "<span class='mesa-label'>" + t.getCode() + "</span>"
-    );
-    btn.getStyle().set("left", t.getX() + "px");
-    btn.getStyle().set("top", t.getY() + "px");
-    btn.addClickListener(e -> showOrdersFor(t, orders));
-    canvas.add(btn);
+      var btn = new Button();
+      btn.addClassName("mesa-btn");
+      btn.getElement().setProperty("innerHTML",
+          "<img src='icons/mesa.png' class='mesa-icon'>" +
+          "<span class='mesa-label'>" + t.getCode() + "</span>"
+      );
+      btn.getStyle().set("left", t.getX() + "px");
+      btn.getStyle().set("top", t.getY() + "px");
+      btn.addClickListener(e -> showOrdersFor(t, orders));
+      canvas.add(btn);
     }
+  }
 
+  private void showAddTableDialog(TableService tables) {
+    var dialog = new Dialog();
+    dialog.setHeaderTitle("Agregar Nueva Mesa");
+
+    var codeField = new com.vaadin.flow.component.textfield.TextField("Código (ej. M1)");
+    var capacityField = new com.vaadin.flow.component.textfield.IntegerField("Capacidad");
+    capacityField.setValue(4);
+
+    var saveBtn = new Button("Guardar", e -> {
+      if (codeField.isEmpty() || capacityField.isEmpty()) return;
+      
+      var t = pos.domain.TableSpot.builder()
+          .code(codeField.getValue())
+          .capacity(capacityField.getValue())
+          .x(50) // Default position
+          .y(50)
+          .state(pos.domain.TableState.FREE)
+          .build();
+      
+      tables.save(t);
+      dialog.close();
+      com.vaadin.flow.component.UI.getCurrent().getPage().reload(); // Simple reload to show new table
+    });
+
+    var layout = new VerticalLayout(codeField, capacityField, saveBtn);
+    dialog.add(layout);
+    dialog.open();
   }
 
   private void showOrdersFor(TableSpot t, OrderService orders) {
