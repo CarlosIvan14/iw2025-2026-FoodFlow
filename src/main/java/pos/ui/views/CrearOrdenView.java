@@ -5,7 +5,7 @@ import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.notification.Notification;
-import com.vaadin.flow.component.notification.NotificationVariant; // Importante para as cores!
+import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.IntegerField;
@@ -52,71 +52,100 @@ public class CrearOrdenView extends VerticalLayout implements RouteGuard {
     tableSelect.addClassName("orden-combobox");
 
     // --- Tabla de productos ---
-    // --- Tabla de productos ---
     var grid = new Grid<>(OrderItem.class, false);
     grid.addClassName("orden-grid");
+    grid.setHeight("400px");
 
-    // 1. Nome do Produto (Mantém igual)
-    grid.addColumn(OrderItem::getProductName).setHeader("Producto").setAutoWidth(true);
+    // 1. Nome do Produto
+    grid.addColumn(OrderItem::getProductName)
+            .setHeader("Producto")
+            .setAutoWidth(true)
+            .setFlexGrow(1);
 
-    // 2. Quantidade EDITÁVEL (Mudança Principal)
+    // 2. Quantidade EDITÁVEL com botões +/-
     grid.addComponentColumn(item -> {
-      // Cria um campo numérico para cada linha
-      IntegerField qtyField = new IntegerField();
-      qtyField.setValue(item.getQty());
-      qtyField.setMin(1);
-      qtyField.setWidth("80px");
-      qtyField.setStepButtonsVisible(true); // Mostra setinhas +/-
+              IntegerField qtyField = new IntegerField();
+              qtyField.setValue(item.getQty());
+              qtyField.setMin(1);
+              qtyField.setMax(999);
+              qtyField.setWidth("120px");
+              qtyField.setStepButtonsVisible(true);
+              qtyField.setStep(1);
+              qtyField.addClassName("orden-qty-field");
 
-      // O que acontece quando muda o número:
-      qtyField.addValueChangeListener(e -> {
-        if (e.getValue() != null) {
-          item.setQty(e.getValue()); // Atualiza a quantidade na memória
-          grid.getDataProvider().refreshItem(item); // Força a tabela a recalcular o Subtotal visualmente
-        }
-      });
-      return qtyField;
-    }).setHeader("Cant").setWidth("110px").setFlexGrow(0);
+              qtyField.addValueChangeListener(e -> {
+                if (e.getValue() != null && e.getValue() > 0) {
+                  item.setQty(e.getValue());
+                  grid.getDataProvider().refreshItem(item);
+                }
+              });
 
-    // 3. Preço Unitário (Mantém igual)
-    grid.addColumn(OrderItem::getUnitPrice).setHeader("Precio U.").setWidth("100px");
+              return qtyField;
+            })
+            .setHeader("Cantidad")
+            .setWidth("140px")
+            .setFlexGrow(0);
 
-    // 4. Subtotal Calculado (Mantém igual, mas agora atualiza sozinho)
-    grid.addColumn(i -> i.getUnitPrice().multiply(java.math.BigDecimal.valueOf(i.getQty())))
-            .setHeader("Subtotal");
+    // 3. Preço Unitário
+    grid.addColumn(item -> String.format("€%.2f", item.getUnitPrice()))
+            .setHeader("Precio U.")
+            .setWidth("110px")
+            .setFlexGrow(0);
 
-    // 5. Botão de DELETAR (Novo)
+    // 4. Subtotal Calculado
+    grid.addColumn(item -> String.format("€%.2f",
+                    item.getUnitPrice().multiply(java.math.BigDecimal.valueOf(item.getQty()))))
+            .setHeader("Subtotal")
+            .setWidth("110px")
+            .setFlexGrow(0);
+
+    // 5. Botão de DELETAR
     grid.addComponentColumn(item -> {
-      Button btnDelete = new Button(new Icon(VaadinIcon.TRASH)); // Ícone de Lixeira
-      btnDelete.addThemeVariants(ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_SMALL); // Vermelho e pequeno
+              Button btnDelete = new Button(new Icon(VaadinIcon.TRASH));
+              btnDelete.addThemeVariants(ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_SMALL);
+              btnDelete.addClassName("orden-delete-btn");
+              btnDelete.getElement().setAttribute("aria-label", "Eliminar producto");
 
-      btnDelete.addClickListener(e -> {
-        items.remove(item); // Remove da lista
-        grid.getDataProvider().refreshAll(); // Atualiza a tabela
-        Notification.show("Producto eliminado");
-      });
-      return btnDelete;
-    }).setHeader("Quitar").setWidth("90px").setFlexGrow(0);
+              btnDelete.addClickListener(e -> {
+                items.remove(item);
+                grid.getDataProvider().refreshAll();
+                Notification.show("Producto eliminado", 2000, Notification.Position.BOTTOM_START)
+                        .addThemeVariants(NotificationVariant.LUMO_CONTRAST);
+              });
+
+              return btnDelete;
+            })
+            .setHeader("Eliminar")
+            .setWidth("100px")
+            .setFlexGrow(0);
 
     // Product selection and add to order
     var productSelect = new ComboBox<Product>("Producto");
     productSelect.setItems(menu.list());
     productSelect.setItemLabelGenerator(Product::getName);
+    productSelect.setWidth("300px");
     productSelect.addClassName("orden-product-select");
 
     var qty = new IntegerField("Cantidad");
     qty.setMin(1);
     qty.setValue(1);
-    qty.setWidth("80px");
+    qty.setWidth("100px");
+    qty.setStepButtonsVisible(true);
     qty.addClassName("orden-cantidad");
 
     var note = new TextField("Nota");
     note.setPlaceholder("Nota opcional");
+    note.setWidth("200px");
     note.addClassName("orden-nota");
 
-    var btnAdd = new Button("Agregar", e -> {
+    var btnAdd = new Button("Agregar", new Icon(VaadinIcon.PLUS));
+    btnAdd.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+    btnAdd.addClassName("orden-add-btn");
+
+    btnAdd.addClickListener(e -> {
       var p = productSelect.getValue();
       var q = qty.getValue();
+
       if (p != null && q != null && q > 0) {
         items.add(OrderItem.builder()
                 .productId(p.getId())
@@ -125,69 +154,83 @@ public class CrearOrdenView extends VerticalLayout implements RouteGuard {
                 .unitPrice(p.getPrice())
                 .comment(note.getValue())
                 .build());
-        grid.setItems(items); // refresh
-        Notification.show("Agregado: " + p.getName());
+        grid.setItems(items);
+
+        Notification.show("✓ Agregado: " + p.getName(), 2000, Notification.Position.BOTTOM_START)
+                .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+
         productSelect.clear();
         qty.setValue(1);
         note.clear();
       } else {
-        Notification.show("Selecciona un producto y cantidad válida.");
+        Notification.show("Selecciona un producto y cantidad válida", 3000, Notification.Position.TOP_END)
+                .addThemeVariants(NotificationVariant.LUMO_ERROR);
       }
     });
-    btnAdd.addClassName("orden-add-btn");
 
     var addProductLayout = new HorizontalLayout(productSelect, qty, note, btnAdd);
     addProductLayout.addClassName("orden-add-product-layout");
-    addProductLayout.setAlignItems(Alignment.BASELINE);
+    addProductLayout.setAlignItems(Alignment.END);
+    addProductLayout.setWidthFull();
+    addProductLayout.getStyle().set("flex-wrap", "wrap");
 
     // --- Botones principales ---
-    var btnCreate = new Button("Crear Orden", e -> {
-      // 1. Validação: Mesa não selecionada
+    var btnCreate = new Button("Crear Orden", new Icon(VaadinIcon.CHECK_CIRCLE));
+    btnCreate.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SUCCESS);
+    btnCreate.addClassName("orden-crear-btn");
+
+    btnCreate.addClickListener(e -> {
       if (tableSelect.getValue() == null) {
-        Notification.show("Selecciona una mesa", 3000, Notification.Position.TOP_END)
+        Notification.show("⚠ Selecciona una mesa", 3000, Notification.Position.TOP_END)
                 .addThemeVariants(NotificationVariant.LUMO_ERROR);
         return;
       }
 
-      // 2. Validação: Carrinho vazio
       if (items.isEmpty()) {
-        Notification.show("Agrega productos", 3000, Notification.Position.TOP_END)
+        Notification.show("⚠ Agrega productos", 3000, Notification.Position.TOP_END)
                 .addThemeVariants(NotificationVariant.LUMO_ERROR);
         return;
       }
 
-      // 3. Tentativa de criar o pedido
       try {
         orders.createTableOrder(tableSelect.getValue().getId(), items, auth.currentUserId());
 
-        // ✅ SUCESSO (VERDE)
-        // LUMO_SUCCESS deixa verde. Position.TOP_END coloca no canto superior direito.
-        Notification.show("Orden creada exitosamente para la mesa " + tableSelect.getValue().getId(),
-                        3000, Notification.Position.TOP_END)
+        Notification.show("✓ Orden creada exitosamente para la mesa " + tableSelect.getValue().getCode(),
+                        4000, Notification.Position.TOP_END)
                 .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
 
-        // Limpa a tela após sucesso
         items.clear();
         grid.setItems(items);
         tableSelect.clear();
 
       } catch (RuntimeException ex) {
-        // ❌ ERRO DE ESTOQUE (VERMELHO)
-        // LUMO_ERROR deixa vermelho. Mostra a mensagem exata do erro.
-        Notification.show(ex.getMessage(), 5000, Notification.Position.TOP_END)
+        Notification.show("✗ " + ex.getMessage(), 5000, Notification.Position.TOP_END)
                 .addThemeVariants(NotificationVariant.LUMO_ERROR);
       }
     });
-    btnCreate.addClassName("orden-crear-btn");
 
-    var btnDividir = new Button("Dividir cuenta (50/50 demo)", e -> {
-      double total = items.stream().mapToDouble(i -> i.getUnitPrice().doubleValue() * i.getQty()).sum();
-      Notification.show("Dos cuentas de: $" + (total / 2.0));
-    });
+    var btnDividir = new Button("Dividir Cuenta", new Icon(VaadinIcon.SPLIT));
+    btnDividir.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
     btnDividir.addClassName("orden-dividir-btn");
+
+    btnDividir.addClickListener(e -> {
+      if (items.isEmpty()) {
+        Notification.show("No hay productos para dividir", 2000, Notification.Position.BOTTOM_START);
+        return;
+      }
+
+      double total = items.stream()
+              .mapToDouble(i -> i.getUnitPrice().doubleValue() * i.getQty())
+              .sum();
+
+      Notification.show(String.format("💰 Total: €%.2f → Dos cuentas de: €%.2f", total, total / 2.0),
+                      4000, Notification.Position.BOTTOM_CENTER)
+              .addThemeVariants(NotificationVariant.LUMO_PRIMARY);
+    });
 
     var buttons = new HorizontalLayout(btnCreate, btnDividir);
     buttons.addClassName("orden-buttons");
+    buttons.setSpacing(true);
 
     add(title, tableSelect, addProductLayout, grid, buttons);
   }

@@ -1,83 +1,101 @@
 package pos.ui.views;
 
-import com.vaadin.flow.component.Composite;
 import com.vaadin.flow.component.HtmlComponent;
 import com.vaadin.flow.component.UI;
+import com.vaadin.flow.component.dependency.JsModule;
+import com.vaadin.flow.component.dependency.NpmPackage;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
-import com.vaadin.flow.router.RouteAlias;
-import com.vaadin.flow.theme.lumo.LumoUtility;
-import com.vaadin.flow.component.dependency.NpmPackage;
-import com.vaadin.flow.component.dependency.JsModule;
-import pos.ui.MainLayout;
+import elemental.json.Json;       // <--- IMPORTANTE
+import elemental.json.JsonArray;  // <--- IMPORTANTE
 import pos.auth.RouteGuard;
+import pos.ui.MainLayout;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
-
-@Route(value = "admin/analytics", layout = MainLayout.class)
 @PageTitle("Analytics")
-@NpmPackage(value = "chart.js", version = "4.4.4")
+@Route(value = "admin/analytics", layout = MainLayout.class)
+@NpmPackage(value = "chart.js", version = "4.4.0")
 @JsModule("./charts-setup.js")
-public class AnalyticsAdminView extends Composite<VerticalLayout> implements RouteGuard {
+public class AnalyticsAdminView extends VerticalLayout implements RouteGuard {
 
-//  @Override
-  protected VerticalLayout initContent() {
-    VerticalLayout root = new VerticalLayout();
-    root.addClassName("analytics-view");
-    root.setSizeFull();
-    root.setAlignItems(VerticalLayout.Alignment.CENTER);
-    root.setJustifyContentMode(VerticalLayout.JustifyContentMode.START);
+  public AnalyticsAdminView() {
+    addClassName("analytics-view");
+    setSizeFull();
+    setAlignItems(Alignment.CENTER);
 
-    // === Título ===
-    var title = new H2("Análisis de Negocio (Mock)");
-    title.addClassName("analytics-title");
-    root.add(title);
+    var title = new H2("Análisis de Negocio");
+    add(title);
 
-    // === Contenedor de tarjetas de gráficas ===
     var chartsContainer = new Div();
-    chartsContainer.addClassName("analytics-charts");
+    chartsContainer.setWidthFull();
+    chartsContainer.setMaxWidth("800px");
+    chartsContainer.getStyle().set("display", "flex");
+    chartsContainer.getStyle().set("flex-wrap", "wrap");
+    chartsContainer.getStyle().set("gap", "20px");
+    chartsContainer.getStyle().set("justify-content", "center");
 
-    // === Gráfica de ventas ===
     HtmlComponent salesCanvas = new HtmlComponent("canvas");
-    salesCanvas.getElement().setProperty("id", "salesChart");
-    salesCanvas.addClassName("chart-canvas");
-    chartsContainer.add(salesCanvas);
+    salesCanvas.setId("salesChart");
+    salesCanvas.getStyle().set("max-width", "400px");
+    salesCanvas.getStyle().set("max-height", "300px");
 
-    // === Gráfica por roles ===
     HtmlComponent rolesCanvas = new HtmlComponent("canvas");
-    rolesCanvas.getElement().setProperty("id", "rolesChart");
-    rolesCanvas.addClassName("chart-canvas");
-    chartsContainer.add(rolesCanvas);
+    rolesCanvas.setId("rolesChart");
+    rolesCanvas.getStyle().set("max-width", "300px");
+    rolesCanvas.getStyle().set("max-height", "300px");
 
-    root.add(chartsContainer);
+    chartsContainer.add(salesCanvas, rolesCanvas);
+    add(chartsContainer);
 
-    // === Datos mock ===
-    List<String> labels = Arrays.asList("Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom");
-    List<Integer> ventas = Arrays.stream(new int[]{18, 22, 30, 27, 35, 42, 25})
-                                 .boxed().collect(Collectors.toList());
-    List<String> roleLabels = Arrays.asList("Mesero", "Cocina", "Caja", "Admin");
-    List<Integer> roleData = Arrays.stream(new int[]{120, 80, 60, 15})
-                                   .boxed().collect(Collectors.toList());
+    addAttachListener(e -> renderCharts());
+  }
 
-    Serializable labelsS = new ArrayList<>(labels);
-    Serializable ventasS = new ArrayList<>(ventas);
-    Serializable roleLabelsS = new ArrayList<>(roleLabels);
-    Serializable roleDataS = new ArrayList<>(roleData);
+  private void renderCharts() {
+    // Dados brutos
+    String[] daysRaw = {"Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"};
+    Integer[] salesRaw = {180, 220, 300, 270, 350, 420, 250};
 
-    // === Renderizar las gráficas con JS ===
+    String[] rolesRaw = {"Comida", "Bebida", "Postre"};
+    Integer[] roleDataRaw = {65, 25, 10};
+
+    // 1. Converter para JsonArray (O formato nativo do Vaadin)
+    // Isso resolve o erro "Can't encode class..."
+    JsonArray daysJson = toJsonArray(daysRaw);
+    JsonArray salesJson = toJsonArray(salesRaw);
+    JsonArray rolesJson = toJsonArray(rolesRaw);
+    JsonArray roleDataJson = toJsonArray(roleDataRaw);
+
+    // 2. Enviar para o JS
     UI.getCurrent().getPage().executeJs(
-      "window.renderPOSCharts($0, $1, $2, $3, $4, $5)",
-      "salesChart", labelsS, ventasS,
-      "rolesChart", roleLabelsS, roleDataS
+            "window.renderPOSCharts($0, $1, $2, $3, $4, $5)",
+            "salesChart",
+            daysJson,      // Passando JsonArray
+            salesJson,     // Passando JsonArray
+            "rolesChart",
+            rolesJson,     // Passando JsonArray
+            roleDataJson   // Passando JsonArray
     );
+  }
 
-    return root;
+  // --- Métodos Auxiliares para Converter Dados em JSON Seguro ---
+
+  // Converte Array de String para JsonArray
+  private JsonArray toJsonArray(String[] data) {
+    JsonArray array = Json.createArray();
+    for (int i = 0; i < data.length; i++) {
+      array.set(i, data[i]);
+    }
+    return array;
+  }
+
+  // Converte Array de Integer para JsonArray
+  private JsonArray toJsonArray(Integer[] data) {
+    JsonArray array = Json.createArray();
+    for (int i = 0; i < data.length; i++) {
+      array.set(i, data[i]);
+    }
+    return array;
   }
 }

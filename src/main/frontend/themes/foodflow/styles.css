@@ -21,7 +21,6 @@
 html, body {
   margin: 0;
   height: 100%;
-  background-image: url("images/background.jpg");
   background-size: cover;          /* que cubra toda la pantalla */
   background-position: center;     /* centrada */
   background-repeat: no-repeat;    /* sin repetirse */
@@ -150,7 +149,7 @@ vaadin-grid::part(row):hover {
 .mesa-btn {
   position: static;
   display: flex;
-  flex-direction: column; 
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 4px;
@@ -436,4 +435,172 @@ vaadin-app-layout nav li {
   color: #000;
   opacity: 0.8;
   margin-bottom: 15px;
+}
+
+/* Estados de mesa con indicadores visuales */
+.mesa-btn {
+  position: absolute;
+  width: 80px;
+  height: 80px;
+  border-radius: 12px;
+  border: 3px solid #ddd;
+  background: white;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  cursor: pointer;
+}
+
+.mesa-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+/* Estados de mesa */
+.mesa-libre {
+  border-color: #4CAF50;
+  background: #f1f8f4;
+}
+
+.mesa-pendiente {
+  border-color: #FF9800;
+  background: #fff8e1;
+  animation: pulse-orange 2s infinite;
+}
+
+.mesa-cocina {
+  border-color: #2196F3;
+  background: #e3f2fd;
+  animation: pulse-blue 2s infinite;
+}
+
+.mesa-lista {
+  border-color: #4CAF50;
+  background: #e8f5e9;
+  animation: pulse-green 1.5s infinite;
+}
+
+.mesa-pagado {
+  border-color: #9C27B0;
+  background: #f3e5f5;
+}
+
+.mesa-ocupada {
+  border-color: #757575;
+  background: #fafafa;
+}
+
+/* Animaciones de pulso */
+@keyframes pulse-orange {
+  0%, 100% {
+    box-shadow: 0 2px 8px rgba(255, 152, 0, 0.3);
+    border-color: #FF9800;
+  }
+  50% {
+    box-shadow: 0 4px 16px rgba(255, 152, 0, 0.6);
+    border-color: #FFB74D;
+  }
+}
+
+@keyframes pulse-blue {
+  0%, 100% {
+    box-shadow: 0 2px 8px rgba(33, 150, 243, 0.3);
+    border-color: #2196F3;
+  }
+  50% {
+    box-shadow: 0 4px 16px rgba(33, 150, 243, 0.6);
+    border-color: #64B5F6;
+  }
+}
+
+@keyframes pulse-green {
+  0%, 100% {
+    box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+    border-color: #4CAF50;
+  }
+  50% {
+    box-shadow: 0 4px 16px rgba(76, 175, 80, 0.7);
+    border-color: #81C784;
+  }
+}
+
+/* Badge de estado */
+.mesa-badge {
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: bold;
+  white-space: nowrap;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  z-index: 10;
+}
+
+.badge-listo {
+  background: #4CAF50;
+  color: white;
+}
+
+.badge-cocina {
+  background: #2196F3;
+  color: white;
+}
+
+.badge-pendiente {
+  background: #FF9800;
+  color: white;
+}
+
+.badge-pagado {
+  background: #9C27B0;
+  color: white;
+}
+
+.mesa-label {
+  display: block;
+  margin-top: 4px;
+  font-weight: bold;
+  font-size: 14px;
+  color: #333;
+}
+
+.mesa-icon {
+  width: 40px;
+  height: 40px;
+  display: block;
+  margin: 0 auto;
+}
+
+/* Card de pedido en el diálogo */
+.pedido-card {
+  padding: 12px;
+  margin: 8px 0;
+  border-radius: 8px;
+  background: #f5f5f5;
+  border-left: 4px solid #2196F3;
+}
+
+/* Canvas de mesas */
+.mesas-canvas {
+  position: relative;
+  flex: 1;
+  background: #fafafa;
+  border-radius: 8px;
+  min-height: 500px;
+}
+
+/* Header de mesas */
+.mesas-header {
+  padding: 16px;
+  background: white;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.mesas-title {
+  margin: 0;
+  color: #333;
 }
