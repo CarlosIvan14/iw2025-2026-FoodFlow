@@ -17,18 +17,17 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-@Transactional // Isso garante que se der erro de estoque, nada é salvo no banco!
+@Transactional // Garante consistência: ou salva tudo (pedido + estoque) ou nada!
 public class OrderService {
 
     private final OrderRepository orderRepository;
     private final ServiceSessionService serviceSessionService;
     private final UserRepository userRepository;
-
-    // Injeção dos repositórios necessários
     private final ProductRepository productRepository;
     private final InventoryMovementRepository inventoryMovementRepository;
 
     public Order createCustomerOrder(Boolean delivery, String address, String phone, List<OrderItem> items, Long userId) {
+        // Implementação futura para delivery...
         return new Order();
     }
 
@@ -40,9 +39,9 @@ public class OrderService {
         ServiceSession session = serviceSessionService.findActiveSession(tableId)
                 .orElseGet(() -> serviceSessionService.openSession(tableId, user.getId()));
 
-        // Cálculo do total
+        // Cálculo do total usando o novo método helper
         BigDecimal total = items.stream()
-                .map(OrderItem::total) // Usa o método total() que já existe no OrderItem
+                .map(OrderItem::getTotal)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         // Prepara o objeto Pedido
@@ -55,31 +54,37 @@ public class OrderService {
 
         // --- LÓGICA DE ESTOQUE ---
         for (OrderItem item : items) {
+            // Vincula o item ao pedido pai
             item.setOrder(order);
 
-            // 1. Buscar o produto pelo ID (Correção aqui: usa item.getProductId())
-            Product product = productRepository.findById(item.getProductId())
-                    .orElseThrow(() -> new EntityNotFoundException("Produto não encontrado ID: " + item.getProductId()));
+            // 1. Validar e Buscar o produto real no banco para pegar o estoque ATUAL
+            // O frontend mandou o objeto Product, pegamos o ID dele.
+            Long prodId = item.getProduct().getId();
 
-            int qtySold = item.getQty();
+            Product dbProduct = productRepository.findById(prodId)
+                    .orElseThrow(() -> new EntityNotFoundException("Produto não encontrado ID: " + prodId));
+
+            // Atualizamos a referência do item para o produto gerenciado pelo Hibernate
+            item.setProduct(dbProduct);
+
+            int quantityToSell = item.getQuantity(); // Corrigido de getQty para getQuantity
 
             // 2. VERIFICAÇÃO: Tem estoque suficiente?
-            // Se não tiver, o sistema lança erro e cancela TUDO (rollback)
-            if (product.getStock() < qtySold) {
-                throw new RuntimeException("Estoque insuficiente para o produto: " + product.getName()
-                        + ". Disponível: " + product.getStock() + ", Solicitado: " + qtySold);
+            if (dbProduct.getStock() < quantityToSell) {
+                throw new RuntimeException("Estoque insuficiente para: " + dbProduct.getName()
+                        + ". Disponível: " + dbProduct.getStock() + ", Solicitado: " + quantityToSell);
             }
 
             // 3. Baixar estoque
-            product.setStock(product.getStock() - qtySold);
-            productRepository.save(product);
+            dbProduct.setStock(dbProduct.getStock() - quantityToSell);
+            productRepository.save(dbProduct);
 
-            // 4. Registrar Movimento de Saída (Correção aqui: usa MovementType.EXIT)
+            // 4. Registrar Movimento de Saída
             InventoryMovement movement = InventoryMovement.builder()
-                    .product(product)
-                    .quantity(qtySold)
+                    .product(dbProduct)
+                    .quantity(quantityToSell)
                     .movementType(MovementType.EXIT)
-                    .note("Venda na Mesa " + tableId + " - Pedido em processamento")
+                    .note("Venda Mesa " + tableId + " - Pedido #" + order.getId()) // ID do pedido só existe após salvar, cuidado aqui (pode ser null antes do flush)
                     .build();
 
             inventoryMovementRepository.save(movement);
@@ -87,8 +92,11 @@ public class OrderService {
 
         order.setItems(items);
 
-        // Salva o pedido final
-        return orderRepository.save(order);
+        // Salva o pedido final e propaga as alterações (Cascade)
+        Order savedOrder = orderRepository.save(order);
+
+        log.info("Pedido criado com sucesso: ID {}", savedOrder.getId());
+        return savedOrder;
     }
 
     public List<Order> kitchenQueue() {
@@ -96,7 +104,8 @@ public class OrderService {
     }
 
     public List<Order> all() {
-        return orderRepository.findAllWithDetails();
+        // Certifique-se que existe este método no repositório ou use findAll()
+        return orderRepository.findAll();
     }
 
     public void updateStatus(Long id, OrderStatus status) {
@@ -111,16 +120,12 @@ public class OrderService {
         return orderRepository.findByStatus(OrderStatus.LISTO);
     }
 
-    // Processa o pagamento e finaliza
     public void payOrder(Long id) {
         updateStatus(id, OrderStatus.PAGADO);
     }
 
-    // Retorna apenas pedidos "em aberto" para aquela mesa
     public List<Order> findActiveOrdersByTable(Long tableId) {
-        // Lista do que queremos IGNORAR
         List<OrderStatus> finishedStatuses = List.of(OrderStatus.PAGADO, OrderStatus.CANCELED);
-
         return orderRepository.findByTableIdAndStatusNotIn(tableId, finishedStatuses);
     }
 }

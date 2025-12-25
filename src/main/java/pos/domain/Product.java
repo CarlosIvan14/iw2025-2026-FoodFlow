@@ -1,21 +1,25 @@
 package pos.domain;
 
 import jakarta.persistence.*;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.*;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.Where;
 
 import java.math.BigDecimal;
 
 @Entity
-@Table(name = "producto")
+@Table(name = "producto") // O nome da tabela é 'producto'
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+// 1. Quando o repositório mandar deletar, o Hibernate vai executar este UPDATE:
+@SQLDelete(sql = "UPDATE producto SET active = false WHERE id = ?")
+// 2. Toda vez que buscar produtos, traz apenas os que active = true
+@Where(clause = "active = true")
 public class Product {
 
     @Id
@@ -42,4 +46,9 @@ public class Product {
     @Column(name = "stock", nullable = false)
     @Builder.Default
     private Integer stock = 0;
+
+    // 3. O campo que controla se está ativo ou não
+    @Column(name = "active", nullable = false)
+    @Builder.Default
+    private boolean active = true;
 }
