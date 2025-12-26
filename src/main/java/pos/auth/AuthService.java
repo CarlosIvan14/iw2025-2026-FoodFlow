@@ -36,10 +36,6 @@ public class AuthService {
     VaadinSession.getCurrent().setAttribute(UserSession.class, new UserSession(userId, username, role));
   }
 
-  public void logout(){
-    VaadinSession.getCurrent().close();
-  }
-
   public boolean isAuthenticated(){
     return VaadinSession.getCurrent().getAttribute(UserSession.class) != null;
   }
@@ -64,4 +60,17 @@ public class AuthService {
           super(message);
       }
   }
+
+  public void logout(){
+        // 1. Limpa o atributo da sessão (opcional, mas boa prática)
+        VaadinSession.getCurrent().setAttribute(UserSession.class, null);
+
+        // 2. Fecha a sessão do Vaadin (Limpa a memória do servidor)
+        VaadinSession.getCurrent().close();
+
+        // 3. IMPORTANTE: Redireciona o navegador para a tela de login
+        // Usamos setLocation (e não navigate) para forçar um recarregamento total da página
+        com.vaadin.flow.component.UI.getCurrent().getPage().setLocation("/login");
+  }
+
 }
