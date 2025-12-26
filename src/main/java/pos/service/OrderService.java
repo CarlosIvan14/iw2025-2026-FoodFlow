@@ -5,13 +5,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pos.domain.*;
-import pos.repository.InventoryMovementRepository;
-import pos.repository.OrderRepository;
-import pos.repository.ProductRepository;
-import pos.repository.UserRepository;
+import pos.repository.*;
 import jakarta.persistence.EntityNotFoundException;
 
 import java.math.BigDecimal;
+import java.time.OffsetDateTime;
 import java.util.List;
 
 @Service
@@ -25,6 +23,8 @@ public class OrderService {
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
     private final InventoryMovementRepository inventoryMovementRepository;
+    private final SaleRepository saleRepository;
+    private final PaymentRepository paymentRepository;
 
     public Order createCustomerOrder(Boolean delivery, String address, String phone, List<OrderItem> items, Long userId) {
         // Implementação futura para delivery...
@@ -120,8 +120,55 @@ public class OrderService {
         return orderRepository.findByStatus(OrderStatus.LISTO);
     }
 
-    public void payOrder(Long id) {
-        updateStatus(id, OrderStatus.PAGADO);
+    /**
+     * NOVO MÉTODO DE PAGAMENTO COMPLETO
+     * Substitui o antigo payOrder(id)
+     */
+    public void processPayment(Long orderId, PaymentMethod method, BigDecimal amountReceived, BigDecimal tip) {
+        // 1. Busca o Pedido
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new EntityNotFoundException("Order not found id=" + orderId));
+
+        // 2. Validação simples (Garante que não estamos pagando um pedido já pago)
+        if (order.getStatus() == OrderStatus.PAGADO) {
+            throw new IllegalStateException("Esta orden ya ha sido pagada.");
+        }
+
+        // 3. Cria a VENDA (Registro Financeiro)
+        Sale sale = Sale.builder()
+                .date(OffsetDateTime.now())
+                .total(order.getTotal())
+                .user(order.getCustomer())
+                .order(order) // Link para rastreabilidade
+                .build();
+
+        saleRepository.save(sale); // Salva a venda primeiro para ter o ID
+
+        // 4. Cria o PAGAMENTO vinculado à Venda
+        // Nota: O 'amount' do pagamento é o valor da dívida (Total do Pedido).
+        // O troco é calculado apenas visualmente no frontend e não precisa ser salvo aqui,
+        // a menos que você queira auditar o fluxo de caixa físico.
+        Payment payment = Payment.builder()
+                .sale(sale)
+                .method(method)
+                .amount(order.getTotal())
+                .tip(tip != null ? tip : BigDecimal.ZERO)
+                .status(PaymentStatus.APPROVED)
+                .createdAt(OffsetDateTime.now())
+                .build();
+
+        paymentRepository.save(payment);
+
+        // 5. Atualiza o status do pedido para encerrar
+        order.setStatus(OrderStatus.PAGADO);
+        orderRepository.save(order);
+
+        // Opcional: Se quiser fechar a sessão da mesa automaticamente
+        // if (order.getServiceSession() != null) {
+        //     serviceSessionService.closeSession(order.getServiceSession().getId());
+        // }
+
+        log.info("Pago procesado con éxito. Venda ID: {}, Pago ID: {}", sale.getId(), payment.getId());
     }
 
     public List<Order> findActiveOrdersByTable(Long tableId) {
