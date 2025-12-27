@@ -43,7 +43,7 @@ public class CrearOrdenView extends VerticalLayout implements RouteGuard {
     setAlignItems(Alignment.CENTER); // Centraliza visualmente
 
     // --- Título ---
-    var title = new H2("Crear Orden (Mesero)");
+    var title = new H2("Crear Pedido");
     title.addClassName("orden-title");
 
     // --- Selección de mesa ---
@@ -166,7 +166,7 @@ public class CrearOrdenView extends VerticalLayout implements RouteGuard {
     addProductLayout.setWidthFull();
 
     // --- Botões Finais ---
-    var btnCreate = new Button("Confirmar Orden", new Icon(VaadinIcon.CHECK_CIRCLE));
+    var btnCreate = new Button("Confirmar Pedido", new Icon(VaadinIcon.CHECK_CIRCLE));
     btnCreate.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SUCCESS);
     btnCreate.setWidth("200px");
 
@@ -177,7 +177,7 @@ public class CrearOrdenView extends VerticalLayout implements RouteGuard {
         return;
       }
       if (items.isEmpty()) {
-        Notification.show("⚠ Agrega productos a la orden", 3000, Notification.Position.MIDDLE)
+        Notification.show("⚠ Agrega productos al Pedido", 3000, Notification.Position.MIDDLE)
                 .addThemeVariants(NotificationVariant.LUMO_ERROR);
         return;
       }
@@ -186,7 +186,7 @@ public class CrearOrdenView extends VerticalLayout implements RouteGuard {
         // Chama o serviço passando a lista de itens montados
         orders.createTableOrder(tableSelect.getValue().getId(), items, auth.currentUserId());
 
-        Notification.show("Orden creada para mesa " + tableSelect.getValue().getCode(),
+        Notification.show("Pedido creadao para la mesa " + tableSelect.getValue().getCode(),
                         4000, Notification.Position.TOP_CENTER)
                 .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
 
@@ -202,21 +202,7 @@ public class CrearOrdenView extends VerticalLayout implements RouteGuard {
       }
     });
 
-    // Botão de Dividir Conta (Apenas visual/calculadora por enquanto)
-    var btnDividir = new Button("Dividir Total", new Icon(VaadinIcon.CALC));
-    btnDividir.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
-    btnDividir.addClickListener(e -> {
-      if (items.isEmpty()) return;
-
-      double total = items.stream()
-              .mapToDouble(i -> i.getTotal().doubleValue()) // Usa o helper getTotal
-              .sum();
-
-      Notification.show(String.format("Total: €%.2f / 2 = €%.2f cada", total, total/2),
-              5000, Notification.Position.BOTTOM_CENTER);
-    });
-
-    var footer = new HorizontalLayout(btnDividir, btnCreate);
+    var footer = new HorizontalLayout(btnCreate);
     footer.setWidthFull();
     footer.setJustifyContentMode(JustifyContentMode.END); // Botões à direita
 
