@@ -23,7 +23,7 @@ public class CocinaView extends VerticalLayout implements RouteGuard {
     setAlignItems(Alignment.CENTER);
     setJustifyContentMode(JustifyContentMode.START);
 
-    var title = new H2("Pedidos (Cocina) — Ordenados por mesa y fecha");
+    var title = new H2("Cocina");
     title.addClassName("cocina-title");
 
     var grid = new Grid<>(Order.class, false);
@@ -35,11 +35,9 @@ public class CocinaView extends VerticalLayout implements RouteGuard {
     grid.addColumn(Order::getTotal).setHeader("Total");
 
     grid.addComponentColumn(o -> {
-      var btn = new Button("✔ LISTO", e -> {
-        // Muda para LISTO (disponível para o Caixa agora)
+      var btn = new Button("LISTO", e -> {
         orders.updateStatus(o.getId(), pos.domain.OrderStatus.LISTO);
 
-        // Atualiza a grid da cozinha (o pedido deve sumir daqui)
         grid.setItems(orders.kitchenQueue());
 
         // Feedback opcional

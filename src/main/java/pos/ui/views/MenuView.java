@@ -165,7 +165,7 @@ public class MenuView extends VerticalLayout {
               layout.add(name, categoryBadge);
               return layout;
             }))
-            .setHeader("Producto")
+            .setHeader("Productos")
             .setAutoWidth(true)
             .setFlexGrow(1);
 
