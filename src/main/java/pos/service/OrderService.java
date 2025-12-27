@@ -26,6 +26,9 @@ public class OrderService {
     private final SaleRepository saleRepository;
     private final PaymentRepository paymentRepository;
 
+    private final PdfService pdfService;
+    private final EmailService emailService;
+
     public Order createCustomerOrder(Boolean delivery, String address, String phone, List<OrderItem> items, Long userId) {
         // Implementação futura para delivery...
         return new Order();
@@ -124,7 +127,7 @@ public class OrderService {
      * NOVO MÉTODO DE PAGAMENTO COMPLETO
      * Substitui o antigo payOrder(id)
      */
-    public void processPayment(Long orderId, PaymentMethod method, BigDecimal amountReceived, BigDecimal tip) {
+    public void processPayment(Long orderId, PaymentMethod method, BigDecimal amountReceived, BigDecimal tip, String customerEmail) {
         // 1. Busca o Pedido
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new EntityNotFoundException("Order not found id=" + orderId));
@@ -163,10 +166,21 @@ public class OrderService {
         order.setStatus(OrderStatus.PAGADO);
         orderRepository.save(order);
 
-        // Opcional: Se quiser fechar a sessão da mesa automaticamente
-        // if (order.getServiceSession() != null) {
-        //     serviceSessionService.closeSession(order.getServiceSession().getId());
-        // }
+        if (customerEmail != null && !customerEmail.isBlank()) {
+            try {
+                // Gera o PDF em memória (byte array)
+                byte[] pdfBytes = pdfService.generateReceipt(order);
+
+                // Envia o e-mail (Async)
+                emailService.sendReceiptWithPdf(customerEmail, pdfBytes, orderId);
+
+                log.info("Processo de envio de recibo iniciado para: {}", customerEmail);
+            } catch (Exception e) {
+                // Importante: Usamos try-catch para que, se o e-mail falhar (ex: sem internet),
+                // o pagamento NÃO seja cancelado. O pagamento já foi salvo acima.
+                log.error("Erro ao tentar enviar recibo por e-mail", e);
+            }
+        }
 
         log.info("Pago procesado con éxito. Venda ID: {}, Pago ID: {}", sale.getId(), payment.getId());
     }

@@ -20,6 +20,8 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.BigDecimalField;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.component.checkbox.Checkbox;
+import com.vaadin.flow.component.textfield.EmailField;
 import pos.auth.RouteGuard;
 import pos.domain.Order;
 import pos.domain.PaymentMethod;
@@ -29,6 +31,8 @@ import pos.ui.MainLayout;
 
 import java.math.BigDecimal;
 import java.util.List;
+
+
 
 @PageTitle("Caja")
 @Route(value = "admin/caja", layout = MainLayout.class)
@@ -117,19 +121,21 @@ public class AdminCajaView extends VerticalLayout implements RouteGuard {
     Dialog dialog = new Dialog();
     dialog.setHeaderTitle("Cobrar " + (order.getTableId() != null ? "Mesa " + order.getTableId() : "Orden"));
 
-    // 1. Exibir Total Grande
+    // --- 1. DEFINIÇÃO DAS VARIÁVEIS VISUAIS (Tudo aqui no topo) ---
+
+    // Total
     H2 totalDisplay = new H2("€ " + order.getTotal());
     totalDisplay.getStyle().set("color", "#28a745").set("align-self", "center");
 
-    // 2. Seletor de Método
+    // Combo de Método
     ComboBox<PaymentMethod> methodSelect = new ComboBox<>("Método de Pago");
     methodSelect.setItems(PaymentMethod.values());
-    methodSelect.setValue(PaymentMethod.CASH); // Padrão Dinheiro
+    methodSelect.setValue(PaymentMethod.CASH);
     methodSelect.setWidthFull();
 
-    // 3. Campos de Valores
+    // Campos Numéricos
     BigDecimalField receivedField = new BigDecimalField("Monto Recibido (€)");
-    receivedField.setValue(order.getTotal()); // Padrão: valor exato
+    receivedField.setValue(order.getTotal());
     receivedField.setWidthFull();
     receivedField.setClearButtonVisible(true);
 
@@ -137,13 +143,32 @@ public class AdminCajaView extends VerticalLayout implements RouteGuard {
     tipField.setValue(BigDecimal.ZERO);
     tipField.setWidthFull();
 
-    // Campo de Troco (Somente Leitura)
     BigDecimalField changeField = new BigDecimalField("Cambio / Troco (€)");
     changeField.setReadOnly(true);
     changeField.setWidthFull();
     changeField.setValue(BigDecimal.ZERO);
 
-    // 4. Lógica de Cálculo de Troco
+    // CAMPOS DE EMAIL (Definidos aqui para não dar erro de "symbol not found")
+    Checkbox sendReceiptCheck = new Checkbox("¿Enviar recibo por correo?");
+
+    EmailField emailField = new EmailField("Correo del Cliente");
+    emailField.setPlaceholder("cliente@email.com");
+    emailField.setWidthFull();
+    emailField.setVisible(false); // Começa invisível
+    emailField.setClearButtonVisible(true);
+    emailField.setErrorMessage("Correo inválido");
+
+    // --- 2. LÓGICA DE INTERFACE ---
+
+    // Mostrar/Esconder email (Agora funciona porque emailField já existe)
+    sendReceiptCheck.addValueChangeListener(e -> {
+      emailField.setVisible(e.getValue());
+      if (e.getValue()) {
+        emailField.focus();
+      }
+    });
+
+    // Calcular Troco
     receivedField.addValueChangeListener(e -> {
       BigDecimal received = e.getValue() != null ? e.getValue() : BigDecimal.ZERO;
       BigDecimal total = order.getTotal();
@@ -153,7 +178,6 @@ public class AdminCajaView extends VerticalLayout implements RouteGuard {
         receivedField.setInvalid(false);
       } else {
         changeField.setValue(BigDecimal.ZERO);
-        // Se for cartão, não validamos "menor que total" aqui pois o campo pode ficar oculto
         if (methodSelect.getValue() == PaymentMethod.CASH) {
           receivedField.setInvalid(true);
           receivedField.setErrorMessage("Monto insuficiente");
@@ -161,71 +185,84 @@ public class AdminCajaView extends VerticalLayout implements RouteGuard {
       }
     });
 
-    // Atalho: Botão "Valor Exato"
-    Button btnExact = new Button("Valor Exacto", e -> {
-      receivedField.setValue(order.getTotal());
-    });
+    Button btnExact = new Button("Valor Exacto", e -> receivedField.setValue(order.getTotal()));
     btnExact.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL);
 
-    // Lógica visual: Se mudar para Cartão, esconde o campo de "Recebido" e "Troco"
+    // Mudar Dinheiro/Cartão
     methodSelect.addValueChangeListener(e -> {
       boolean isCash = e.getValue() == PaymentMethod.CASH;
       receivedField.setVisible(isCash);
       changeField.setVisible(isCash);
       btnExact.setVisible(isCash);
-
-      if (!isCash) {
-        // Se for cartão, assumimos que recebeu o valor exato
-        receivedField.setValue(order.getTotal());
-      }
+      if (!isCash) receivedField.setValue(order.getTotal());
     });
 
-    // 5. Botões de Ação
+    // --- 3. BOTÕES E AÇÃO FINAL ---
+
     Button btnCancel = new Button("Cancelar", e -> dialog.close());
 
     Button btnConfirm = new Button("Confirmar Pago", new Icon(VaadinIcon.CHECK));
     btnConfirm.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SUCCESS);
-    btnConfirm.addClickShortcut(Key.ENTER); // Enter para confirmar
+    btnConfirm.addClickShortcut(Key.ENTER);
 
+    // A Lógica do Clique
     btnConfirm.addClickListener(e -> {
       BigDecimal received = receivedField.getValue();
       BigDecimal total = order.getTotal();
 
-      // Validação final
+      // Validação de valor
       if (received == null || received.compareTo(total) < 0) {
-        Notification.show("Monto insuficiente para cobrir el total", 3000, Notification.Position.MIDDLE)
+        Notification.show("Monto insuficiente", 3000, Notification.Position.MIDDLE)
                 .addThemeVariants(NotificationVariant.LUMO_ERROR);
         return;
       }
 
+      // Validação do Email e criação da variável 'emailToSend'
+      String emailToSend = null; // Começa nulo
+
+      if (sendReceiptCheck.getValue()) {
+        // Se marcou o checkbox, validamos o campo
+        if (emailField.isEmpty() || emailField.isInvalid()) {
+          Notification.show("Por favor, escriba un correo válido", 3000, Notification.Position.MIDDLE)
+                  .addThemeVariants(NotificationVariant.LUMO_ERROR);
+          return; // Para tudo se o email estiver errado
+        }
+        // Se tudo ok, pega o valor
+        emailToSend = emailField.getValue();
+      }
+
       try {
-        // Chama o serviço atualizado
+        // Agora 'emailToSend' existe e pode ser passado
         orderService.processPayment(
                 order.getId(),
                 methodSelect.getValue(),
                 received,
-                tipField.getValue()
+                tipField.getValue(),
+                emailToSend
         );
 
         Notification.show("Pago realizado con éxito!", 3000, Notification.Position.TOP_END)
                 .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
 
         dialog.close();
-        refreshCards(); // Atualiza a tela de fundo
+        refreshCards();
 
       } catch (Exception ex) {
         Notification.show("Error: " + ex.getMessage(), 5000, Notification.Position.TOP_END)
                 .addThemeVariants(NotificationVariant.LUMO_ERROR);
+        ex.printStackTrace();
       }
     });
 
-    // Layout do Dialog
+    // --- 4. MONTAGEM DO LAYOUT ---
     VerticalLayout layout = new VerticalLayout(
             totalDisplay,
             methodSelect,
-            new HorizontalLayout(receivedField, btnExact), // Botão ao lado do campo
+            new HorizontalLayout(receivedField, btnExact),
             changeField,
-            tipField
+            tipField,
+            sendReceiptCheck, // Checkbox adicionado ao layout
+            emailField        // Campo de Email adicionado ao layout
     );
     layout.setSpacing(true);
     layout.setPadding(false);
