@@ -39,10 +39,11 @@ public class MainLayout extends AppLayout {
         list.add(itemLink("Cocina", "/cocina"));
         list.add(itemLink("Caja", "/admin/caja"));
         list.add(itemLink("Inventario", "/admin/inventario"));
-        list.add(itemLink("Analytics", "/admin/analytics"));
-        list.add(itemLink("Login", "/login"));
-        list.add(itemLink("Registro", "/register"));
-        list.add(itemLink("Reportes", "/reports"));
+        list.add(itemLink("Ingredientes", "/admin/ingredientes"));
+        //list.add(itemLink("Analytics", "/admin/analytics"));
+        //list.add(itemLink("Login", "/login"));
+        //list.add(itemLink("Registro", "/register"));
+        //list.add(itemLink("Reportes", "/reports"));
 
         // Separador visual
         var separador = new ListItem();
