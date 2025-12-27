@@ -21,8 +21,8 @@ import pos.domain.Product;
 import pos.ui.MainLayout;
 import pos.service.ProductService;
 
-@PageTitle("Inventario")
-@Route(value = "admin/inventario", layout = MainLayout.class)
+@PageTitle("Productos")
+@Route(value = "admin/productos", layout = MainLayout.class)
 public class AdminInventarioView extends VerticalLayout implements RouteGuard {
 
   private final ProductService productService;
@@ -38,7 +38,7 @@ public class AdminInventarioView extends VerticalLayout implements RouteGuard {
     setAlignItems(Alignment.CENTER);
     setJustifyContentMode(JustifyContentMode.START);
 
-    var title = new H2("Inventario");
+    var title = new H2("Gestión de Productos");
     title.addClassName("inventario-title");
 
     // Botão de Adicionar (Passamos 'null' para indicar que é um novo produto)

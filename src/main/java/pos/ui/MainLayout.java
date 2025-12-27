@@ -38,7 +38,7 @@ public class MainLayout extends AppLayout {
         list.add(itemLink("Mesas", "/mesas"));
         list.add(itemLink("Cocina", "/cocina"));
         list.add(itemLink("Caja", "/admin/caja"));
-        list.add(itemLink("Inventario", "/admin/inventario"));
+        list.add(itemLink("Productos", "/admin/productos"));
         list.add(itemLink("Ingredientes", "/admin/ingredientes"));
         //list.add(itemLink("Analytics", "/admin/analytics"));
         //list.add(itemLink("Login", "/login"));
