@@ -37,32 +37,44 @@ public class AdminIngredientView extends VerticalLayout implements RouteGuard {
         setSizeFull();
         setPadding(true);
         setSpacing(true);
+        setAlignItems(Alignment.CENTER);
+        setJustifyContentMode(JustifyContentMode.START);
 
         // Cabeçalho
         var title = new H2("Gestión de Ingredientes");
+        title.addClassName("ingredients-title");
+
         var addBtn = new Button("Nuevo Ingrediente", VaadinIcon.PLUS.create());
         addBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         addBtn.addClickListener(e -> showDialog(null));
 
         var header = new Div(title, addBtn);
-        header.getStyle().set("display", "flex").set("justify-content", "space-between").set("width", "100%");
+        header.addClassName("ingredients-header");
+        header.getStyle().set("display", "flex");
+        header.getStyle().set("justify-content", "space-between");
+        header.getStyle().set("align-items", "center");
+        header.getStyle().set("width", "100%");
 
         // Grid
         grid = new Grid<>(Ingredient.class, false);
+        grid.addClassName("ingredients-grid");
+        grid.addColumn(Ingredient::getId).setHeader("ID").setAutoWidth(true).setFlexGrow(0);
         grid.addColumn(Ingredient::getNombre).setHeader("Nombre");
         grid.addColumn(Ingredient::getUnidad).setHeader("Unidad").setAutoWidth(true);
         grid.addColumn(Ingredient::getStockActual).setHeader("Stock").setAutoWidth(true);
-        grid.addColumn(i -> "€ " + i.getCostoUnitario()).setHeader("Costo Unit.");
+        grid.addColumn(i -> "€ " + i.getCostoUnitario()).setHeader("Costo Unit.").setAutoWidth(true);
 
         // Coluna de Ações
         grid.addComponentColumn(ingredient -> {
-            Button edit = new Button(VaadinIcon.EDIT.create(), e -> showDialog(ingredient));
-            edit.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+            Button editBtn = new Button(VaadinIcon.EDIT.create());
+            editBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+            editBtn.addClickListener(e -> showDialog(ingredient));
 
-            Button delete = new Button(VaadinIcon.TRASH.create(), e -> deleteIngredient(ingredient));
-            delete.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_ERROR);
+            Button deleteBtn = new Button(VaadinIcon.TRASH.create());
+            deleteBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_ERROR);
+            deleteBtn.addClickListener(e -> showDeleteConfirmation(ingredient));
 
-            return new HorizontalLayout(edit, delete);
+            return new HorizontalLayout(editBtn, deleteBtn);
         }).setHeader("Acciones");
 
         updateGrid();
@@ -79,7 +91,9 @@ public class AdminIngredientView extends VerticalLayout implements RouteGuard {
         dialog.setHeaderTitle(isEdit ? "Editar Ingrediente" : "Nuevo Ingrediente");
 
         // Campos
-        TextField nameField = new TextField("Nombre (Ej: Harina)");
+        TextField nameField = new TextField("Nombre");
+        nameField.setPlaceholder("Ej: Harina, Tomate...");
+
         ComboBox<String> unitField = new ComboBox<>("Unidad");
         unitField.setItems("kg", "gr", "L", "ml", "unidad", "paquete");
 
@@ -92,12 +106,14 @@ public class AdminIngredientView extends VerticalLayout implements RouteGuard {
             unitField.setValue(ingredientToEdit.getUnidad());
             stockField.setValue(ingredientToEdit.getStockActual());
             costField.setValue(ingredientToEdit.getCostoUnitario());
+        } else {
+            stockField.setValue(0.0);
         }
 
         // Botões
         Button saveBtn = new Button("Guardar", e -> {
             if (nameField.isEmpty() || unitField.isEmpty() || stockField.isEmpty() || costField.isEmpty()) {
-                Notification.show("Todos los campos son obligatorios", 3000, Notification.Position.MIDDLE);
+                showNotification("Todos los campos son obligatorios", true);
                 return;
             }
 
@@ -113,11 +129,11 @@ public class AdminIngredientView extends VerticalLayout implements RouteGuard {
                 service.save(ing);
                 updateGrid();
                 dialog.close();
-                Notification.show("Guardado correctamente", 3000, Notification.Position.BOTTOM_END)
-                        .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+                showNotification(isEdit ? "Ingrediente actualizado correctamente" : "Ingrediente creado correctamente", false);
             } catch (ObjectOptimisticLockingFailureException ex) {
-                Notification.show("Error: Alguien modificó este dato. Actualice la página.", 5000, Notification.Position.MIDDLE)
-                        .addThemeVariants(NotificationVariant.LUMO_ERROR);
+                showNotification("Error: Alguien modificó este dato. Actualice la página.", true);
+            } catch (Exception ex) {
+                showNotification("Error al guardar: " + ex.getMessage(), true);
             }
         });
         saveBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
@@ -125,14 +141,38 @@ public class AdminIngredientView extends VerticalLayout implements RouteGuard {
         Button cancelBtn = new Button("Cancelar", e -> dialog.close());
 
         VerticalLayout layout = new VerticalLayout(nameField, unitField, stockField, costField);
-        dialog.add(layout);
-        dialog.getFooter().add(cancelBtn, saveBtn);
+        HorizontalLayout buttons = new HorizontalLayout(saveBtn, cancelBtn);
+
+        dialog.add(layout, buttons);
         dialog.open();
     }
 
-    private void deleteIngredient(Ingredient ingredient) {
-        service.delete(ingredient.getId());
-        updateGrid();
-        Notification.show("Ingrediente eliminado").addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+    // Diálogo de confirmação para exclusão
+    private void showDeleteConfirmation(Ingredient ingredient) {
+        Dialog dialog = new Dialog();
+        dialog.setHeaderTitle("Confirmar eliminación");
+        dialog.add("¿Estás seguro de que deseas eliminar '" + ingredient.getNombre() + "'?");
+
+        Button confirmBtn = new Button("Eliminar", e -> {
+            try {
+                service.delete(ingredient.getId());
+                updateGrid();
+                showNotification("Ingrediente eliminado", false);
+                dialog.close();
+            } catch (Exception ex) {
+                showNotification("Error al eliminar: " + ex.getMessage(), true);
+            }
+        });
+        confirmBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_ERROR);
+
+        Button cancelBtn = new Button("Cancelar", e -> dialog.close());
+
+        dialog.getFooter().add(cancelBtn, confirmBtn);
+        dialog.open();
+    }
+
+    private void showNotification(String text, boolean isError) {
+        Notification notification = Notification.show(text);
+        notification.addThemeVariants(isError ? NotificationVariant.LUMO_ERROR : NotificationVariant.LUMO_SUCCESS);
     }
 }
