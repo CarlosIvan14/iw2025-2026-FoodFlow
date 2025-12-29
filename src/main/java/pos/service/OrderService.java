@@ -15,7 +15,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-@Transactional // Garante consistência: ou salva tudo (pedido + estoque) ou nada!
+@Transactional
 public class OrderService {
 
     private final OrderRepository orderRepository;
@@ -147,15 +147,16 @@ public class OrderService {
         return savedOrder;
     }
 
+    // ✅ Usa findKitchenQueue() que ya carga todo
     public List<Order> kitchenQueue() {
-        return orderRepository.findByStatus(OrderStatus.IN_PREPARATION);
+        return orderRepository.findKitchenQueue();
     }
 
     public List<Order> all() {
-        // Certifique-se que existe este método no repositório ou use findAll()
         return orderRepository.findAll();
     }
 
+    @Transactional
     public void updateStatus(Long id, OrderStatus status) {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Order not found id=" + id));

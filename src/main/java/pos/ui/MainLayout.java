@@ -12,6 +12,7 @@ import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import pos.auth.AuthService;
+import pos.ui.Broadcaster;
 
 public class MainLayout extends AppLayout {
 
@@ -36,6 +37,19 @@ public class MainLayout extends AppLayout {
         super.onAttach(attachEvent);
         // Rebuild drawer when component is attached to reflect current session/role
         createDrawer();
+        // Register to broadcaster so login/logout can request refresh
+        Broadcaster.register(this);
+    }
+
+    @Override
+    protected void onDetach(com.vaadin.flow.component.DetachEvent detachEvent) {
+        super.onDetach(detachEvent);
+        Broadcaster.unregister(this);
+    }
+
+    // Invoked by Broadcaster from any thread; schedule UI access to rebuild drawer
+    public void refreshDrawerAsync() {
+        getUI().ifPresent(ui -> ui.access(() -> createDrawer()));
     }
 
     private void createDrawer() {
@@ -59,6 +73,7 @@ public class MainLayout extends AppLayout {
         if (hasRole(role, "MESERO") || hasRole(role, "ADMIN")) {
             list.add(itemLink("Pedidos", "/ordenes"));
             list.add(itemLink("Mesas", "/mesas"));
+            list.add(itemLink("Caja", "/admin/caja"));
         }
 
         if (hasRole(role, "COCINERO") || hasRole(role, "ADMIN")) {
@@ -72,7 +87,8 @@ public class MainLayout extends AppLayout {
         if (hasRole(role, "ADMIN")) {
             list.add(itemLink("Productos", "/admin/productos"));
             list.add(itemLink("Ingredientes", "/admin/ingredientes"));
-            list.add(itemLink("Analytics", "/admin/analytics"));
+            list.add(itemLink("Anállisis de ventas", "/admin/analytics"));
+            list.add(itemLink("Usuarios", "admin/usuarios"));
         }
 
         // Opciones para cliente (si existe rol CLIENT o CLIENTE)

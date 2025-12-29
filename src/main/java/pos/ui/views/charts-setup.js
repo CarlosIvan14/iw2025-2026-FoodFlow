@@ -1,55 +1,56 @@
 // src/main/frontend/charts-setup.js
+import Chart from "chart.js/auto";
 
-import Chart from 'chart.js/auto';
+window.__posCharts = window.__posCharts || {};
 
-window.renderPOSCharts = function (idSales, labelsSales, dataSales, idRoles, labelsRoles, dataRoles) {
-
-    // 1. Gráfico de Barras (Vendas Semanal)
-    const ctxSales = document.getElementById(idSales);
-    if (ctxSales) {
-        // Destruir gráfico antigo se existir para não sobrepor
-        if (ctxSales.chart) ctxSales.chart.destroy();
-
-        ctxSales.chart = new Chart(ctxSales, {
-            type: 'bar',
-            data: {
-                labels: labelsSales,
-                datasets: [{
-                    label: 'Vendas ($)',
-                    data: dataSales,
-                    backgroundColor: 'rgba(54, 162, 235, 0.6)',
-                    borderColor: 'rgba(54, 162, 235, 1)',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                scales: { y: { beginAtZero: true } }
-            }
-        });
+window.renderPOSCharts = (salesId, labels, data, rolesId, roleLabels, roleData) => {
+  // helpers
+  const getCanvas = (id) => document.getElementById(id);
+  const destroyIfExists = (key) => {
+    if (window.__posCharts[key]) {
+      window.__posCharts[key].destroy();
+      window.__posCharts[key] = null;
     }
+  };
 
-    // 2. Gráfico de Pizza (Pedidos por Função/Categoria)
-    const ctxRoles = document.getElementById(idRoles);
-    if (ctxRoles) {
-        if (ctxRoles.chart) ctxRoles.chart.destroy();
+  const salesCanvas = getCanvas(salesId);
+  const rolesCanvas = getCanvas(rolesId);
+  if (!salesCanvas || !rolesCanvas) return;
 
-        ctxRoles.chart = new Chart(ctxRoles, {
-            type: 'doughnut',
-            data: {
-                labels: labelsRoles,
-                datasets: [{
-                    label: 'Actividad',
-                    data: dataRoles,
-                    backgroundColor: [
-                        '#FF6384',
-                        '#36A2EB',
-                        '#FFCE56',
-                        '#4BC0C0'
-                    ],
-                    hoverOffset: 4
-                }]
-            }
-        });
-    }
-}
+  // Si el canvas está oculto o sin tamaño, Chart.js no dibuja bien
+  const salesRect = salesCanvas.getBoundingClientRect();
+  const rolesRect = rolesCanvas.getBoundingClientRect();
+  if (salesRect.width === 0 || rolesRect.width === 0) {
+    requestAnimationFrame(() =>
+      window.renderPOSCharts(salesId, labels, data, rolesId, roleLabels, roleData)
+    );
+    return;
+  }
+
+  destroyIfExists("sales");
+  destroyIfExists("roles");
+
+  window.__posCharts.sales = new Chart(salesCanvas, {
+    type: "bar",
+    data: {
+      labels: Array.from(labels),
+      datasets: [{ label: "Ventas", data: Array.from(data) }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+    },
+  });
+
+  window.__posCharts.roles = new Chart(rolesCanvas, {
+    type: "doughnut",
+    data: {
+      labels: Array.from(roleLabels),
+      datasets: [{ data: Array.from(roleData) }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+    },
+  });
+};

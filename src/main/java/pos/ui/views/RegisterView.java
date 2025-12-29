@@ -4,6 +4,7 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.EmailField;
@@ -72,7 +73,7 @@ public class RegisterView extends VerticalLayout implements BeforeEnterObserver 
                 try {
                     User newUser = new User();
                     binder.writeBean(newUser);
-                    newUser.setRole(Role.CLIENT); // Por defecto CLIENT
+                    newUser.setRole(Role.CLIENTE); // Por defecto CLIENTE
                     newUser.setActive(true);
                     
                     userService.create(newUser);

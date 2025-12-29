@@ -6,6 +6,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import pos.repository.UserRepository;
 import pos.domain.User;
+import pos.ui.Broadcaster;
 
 import java.io.Serializable;
 
@@ -62,11 +63,14 @@ public class AuthService {
   }
 
   public void logout(){
-        VaadinSession.getCurrent().setAttribute(UserSession.class, null);
+      VaadinSession.getCurrent().setAttribute(UserSession.class, null);
 
-        VaadinSession.getCurrent().close();
+      // Notify layouts to refresh drawer
+      try { Broadcaster.broadcast(); } catch (Exception ignored) {}
 
-        com.vaadin.flow.component.UI.getCurrent().getPage().setLocation("/login");
+      VaadinSession.getCurrent().close();
+
+      com.vaadin.flow.component.UI.getCurrent().getPage().setLocation("/login");
   }
 
 }

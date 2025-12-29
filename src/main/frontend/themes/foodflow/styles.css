@@ -2,10 +2,10 @@
 
 :root {
   --bg-main: #ffffff;
-  --glass: rgba(255, 255, 255, 0.50);      /* vidrio blanco translúcido */
+  --glass: rgba(255, 255, 255, 0.50);
   --glass-strong: rgba(255, 255, 255, 0.65);
   --border-glass: rgba(0, 0, 0, 0.12);
-  --text-light: #111111;                  /* 🔥 texto negro */
+  --text-light: #111111;
   --text-muted: #444444;
   --accent-blue: #1570ff;
   --accent-cyan: #1fb6ff;
@@ -15,17 +15,21 @@
   --blur: blur(45px) saturate(180%);
   --font: "SF Pro Display", "Inter", "Poppins", sans-serif;
   --transition: all 0.25s ease;
+
+  /* layout */
+  --cart-width-desktop: 340px; /* carrito compacto */
+  --gap: 16px;
 }
 
 /* === Fondo General === */
 html, body {
   margin: 0;
   height: 100%;
-  background-size: cover;          /* que cubra toda la pantalla */
-  background-position: center;     /* centrada */
-  background-repeat: no-repeat;    /* sin repetirse */
-  background-attachment: fixed;    /* efecto fijo */
-  color: var(--text-light);               /* 🔥 ahora negro */
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  color: var(--text-light);
   font-family: var(--font);
 }
 
@@ -78,7 +82,7 @@ body::before {
 h1, h2, .title {
   font-size: 1.55rem;
   font-weight: 600;
-  color: #000000;                         /* 🔥 negro */
+  color: #000000;
   margin: 0;
   letter-spacing: 0.2px;
 }
@@ -93,7 +97,7 @@ button, vaadin-button {
   background: rgba(255, 255, 255, 0.55);
   backdrop-filter: var(--blur);
   -webkit-backdrop-filter: var(--blur);
-  color: #000000;                         /* 🔥 negro */
+  color: #000000;
   border: 1px solid rgba(0,0,0,0.15);
   box-shadow: 0 0 12px rgba(0,0,0,0.10);
   transition: var(--transition);
@@ -104,9 +108,6 @@ button:hover {
   transform: translateY(-2px);
   box-shadow: 0 0 20px rgba(0,0,0,0.15);
 }
-
-/* === Inputs === */
-
 
 /* === TABLAS === */
 vaadin-grid::part(header-cell) {
@@ -129,262 +130,10 @@ vaadin-grid::part(row):hover {
   border: 1px solid rgba(0,0,0,0.12);
 }
 
-/* === Canvas (Mesas) === */
-.mesas-canvas {
-  position: flex;
-  flex-wrap: wrap;
-  gap:20px;
-  padding: 20px;
-  width: 100%;
-  height: 600px;
-  margin-top: 20px;
-  border-radius: 24px;
-  background: rgba(255,255,255,0.55);
-  backdrop-filter: blur(35px);
-  -webkit-backdrop-filter: blur(35px);
-  border: 1px solid rgba(0,0,0,0.15);
-}
+/* =======================================================================
+   DRAWER / MENU LATERAL (SE MANTIENE)
+   ======================================================================= */
 
-/* === Botones de Mesas === */
-.mesa-btn {
-  position: static;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-
-  width: 200px;
-  height: 100px;
-  padding: 10px;
-
-  border-radius: 18px;
-  border: 1px solid rgba(0,0,0,0.12);
-  background: rgba(255,255,255,0.55);
-  backdrop-filter: blur(25px);
-  cursor: pointer;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.10);
-  transition: 0.2s ease;
-  text-align: justify;
-}
-
-
-/* Ícono */
-.mesa-icon {
-  width: 100px;
-  height: 100px;
-}
-
-/* Texto */
-.mesa-label {
-  font-size: 14px;
-  color: #000000;
-}
-
-.mesas-title {
-  font-family: "SF Pro Display", "Inter", "Poppins", sans-serif;
-  font-size: 2.8rem;
-  font-weight: 600;
-  color: #000;
-  letter-spacing: -0.5px;  /* estilo Apple */
-  text-align: center;
-  margin: 0;
-}
-
-/* floating navbar */
-.floating-navbar {
-  backdrop-filter: blur(25px) saturate(180%);
-  -webkit-backdrop-filter: blur(25px) saturate(180%);
-  border-radius: 14px;
-  margin: 10px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-}
-
-/* ================================
-   VISTA CREAR ORDEN (MESERO)
-   ================================ */
-
-.orden-view {
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;     /* evita deformación */
-  align-items: center;
-
-  max-width: calc(100vw - 60px);   /* 🔥 respeta los márgenes sin salir */
-  max-height: calc(100vh - 60px);  /* 🔥 respeta los márgenes verticales */
-
-  overflow: auto;                  /* 🔥 contenido grande hace scroll interno */
-
-  padding: 30px;
-  margin: 30px;
-
-  border-radius: 24px;
-  background: rgba(255,255,255,0.55);
-  backdrop-filter: blur(35px);
-  -webkit-backdrop-filter: blur(35px);
-  border: 1px solid rgba(0, 0, 0, 0.15);
-  box-shadow: 0 12px 45px rgba(0,0,0,0.10);
-}
-
-
-/* ================================
-   TÍTULO
-   ================================ */
-.orden-title {
-  font-family: "SF Pro Display", "Inter", "Poppins", sans-serif;
-  font-size: 2.5rem;
-  font-weight: 700;
-  letter-spacing: -0.5px;
-  text-align: center;
-
-  background:black;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-
-  margin-bottom: 20px;
-}
-
-/* ================================
-   COMBOBOX (SELECT MESA)
-   ================================ */
-.orden-combobox {
-  width: 300px;
-}
-
-.orden-combobox::part(input-field) {
-  background: rgba(255,255,255,0.60);
-  border-radius: 12px;
-  border: 1px solid rgba(0,0,0,0.15);
-  backdrop-filter: blur(20px);
-  padding: 6px 12px;
-}
-
-.orden-combobox::part(label) {
-  color: #000;
-}
-
-/* ================================
-   GRID DE PRODUCTOS
-   ================================ */
-
-.orden-grid {
-  width: 100%;
-  border-radius: 16px;
-  overflow: hidden;
-  background: rgba(255,255,255,0.45);
-  backdrop-filter: blur(25px);
-  border: 1px solid rgba(0,0,0,0.12);
-  box-shadow: 0 8px 28px rgba(0,0,0,0.10);
-}
-
-.orden-grid::part(header-cell) {
-  background: rgba(0,0,0,0.05);
-  color: #000;
-  font-weight: 600;
-  border-bottom: 1px solid rgba(0,0,0,0.08);
-}
-
-.orden-grid::part(row) {
-  background: rgba(255,255,255,0.45);
-  backdrop-filter: blur(20px);
-}
-
-.orden-grid::part(row):hover {
-  background: rgba(0,0,0,0.05);
-}
-
-/* ================================
-   FILA PARA AÑADIR PRODUCTO
-   ================================ */
-.orden-add-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.orden-cantidad {
-  width: 70px;
-}
-
-.orden-cantidad::part(input-field) {
-  background: rgba(255,255,255,0.60);
-  border-radius: 10px;
-  border: 1px solid rgba(0,0,0,0.12);
-}
-
-.orden-nota {
-  width: 100px;
-}
-
-.orden-nota::part(input-field) {
-  background: rgba(255,255,255,0.60);
-  border-radius: 10px;
-  border: 1px solid rgba(0,0,0,0.12);
-}
-
-/* BOTÓN "AÑADIR" EN LA FILA */
-.orden-add-btn {
-  background: rgba(0,0,0,0.10);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  color: #000;
-  border: 1px solid rgba(0,0,0,0.12);
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.10);
-}
-
-.orden-add-btn:hover {
-  background: rgba(0,0,0,0.15);
-}
-
-/* ================================
-   BOTONES PRINCIPALES
-   ================================ */
-.orden-buttons {
-  margin-top: 20px;
-  display: flex;
-  gap: 20px;
-  justify-content: center;
-}
-
-.orden-crear-btn,
-.orden-dividir-btn {
-  padding: 12px 25px;
-  font-size: 1rem;
-  font-weight: 600;
-  border-radius: 16px;
-  border: 1px solid rgba(0,0,0,0.15);
-  color: black;
-  background: rgba(255,255,255,0.55);
-  backdrop-filter: blur(25px);
-  cursor: pointer;
-  transition: 0.2s ease;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.10);
-}
-
-.orden-crear-btn:hover,
-.orden-dividir-btn:hover {
-  background: rgba(255,255,255,0.75);
-  box-shadow: 0 10px 28px rgba(0,0,0,0.15);
-}
-
-
-/* floating toogle */
-
-.floating-toggle {
-  background: rgba(255,255,255,0.45);
-  backdrop-filter: blur(25px) saturate(180%);
-  -webkit-backdrop-filter: blur(25px) saturate(180%);
-  border-radius: 50%;
-  padding: 8px;
-  margin: 15px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.12);
-  border: 1px solid rgba(0,0,0,0.15);
-  cursor: pointer;
-}
-
-
-/* DRAWER */
 /* === DRAWER FLOTANTE GLASS === */
 ::part(navbar) {
   background: transparent !important;
@@ -405,6 +154,7 @@ vaadin-grid::part(row):hover {
 
   border-radius: 0 24px 24px 0;
 }
+
 /* === ITEMS DEL MENU === */
 vaadin-app-layout vaadin-drawer-toggle + nav a {
   display: block;
@@ -425,9 +175,11 @@ vaadin-app-layout vaadin-drawer-toggle + nav a:hover {
   box-shadow: 0 3px 12px rgba(0,0,0,0.15);
   transform: translateX(4px);
 }
+
 vaadin-app-layout nav li {
   margin-bottom: 8px;
 }
+
 .drawer-title {
   font-family: "SF Pro Display", "Inter";
   font-weight: 600;
@@ -437,14 +189,6 @@ vaadin-app-layout nav li {
   margin-bottom: 15px;
 }
 
-/* ===== Auth card pequeñas mejoras ===== */
-.auth-card {
-  width: 100%;
-  max-width: 440px;
-  margin: 8px;
-}
-
-/* Asegura que los enlaces del drawer sean legibles y con espacio */
 vaadin-app-layout nav a {
   display: block;
   padding: 12px 14px;
@@ -457,170 +201,774 @@ vaadin-app-layout nav a.active-link {
   font-weight: 700;
 }
 
-/* Estados de mesa con indicadores visuales */
-.mesa-btn {
-  position: absolute;
-  width: 80px;
-  height: 80px;
-  border-radius: 12px;
-  border: 3px solid #ddd;
-  background: white;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+/* floating toggle / navbar */
+.floating-navbar {
+  backdrop-filter: blur(25px) saturate(180%);
+  -webkit-backdrop-filter: blur(25px) saturate(180%);
+  border-radius: 14px;
+  margin: 10px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+.floating-toggle {
+  background: rgba(255,255,255,0.45);
+  backdrop-filter: blur(25px) saturate(180%);
+  -webkit-backdrop-filter: blur(25px) saturate(180%);
+  border-radius: 50%;
+  padding: 8px;
+  margin: 15px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+  border: 1px solid rgba(0,0,0,0.15);
   cursor: pointer;
 }
 
-.mesa-btn:hover {
-  transform: scale(1.05);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+/* =======================================================================
+   CREAR ORDEN (UE) — LEFT OCUPA TODO LO QUE NO ES CARRITO
+   ======================================================================= */
+
+.ue-order-view {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: stretch;
+
+  max-width: 100%;
+  max-height: 100vh;
+  overflow: auto;
+
+  padding: 1.2rem;
+  gap: 1.2rem;
 }
 
-/* Estados de mesa */
-.mesa-libre {
-  border-color: #4CAF50;
-  background: #f1f8f4;
+.ue-header {
+  width: 100%;
+  text-align: left;
+  padding: 0.5rem 0;
 }
 
-.mesa-pendiente {
-  border-color: #FF9800;
-  background: #fff8e1;
-  animation: pulse-orange 2s infinite;
+.ue-title {
+  margin: 0 0 0.25rem 0;
+  font-size: clamp(1.5rem, 4vw, 2.2rem);
 }
 
-.mesa-cocina {
-  border-color: #2196F3;
-  background: #e3f2fd;
-  animation: pulse-blue 2s infinite;
+.ue-subtitle {
+  opacity: 0.75;
+  font-size: clamp(0.85rem, 2.5vw, 1rem);
 }
 
-.mesa-lista {
-  border-color: #4CAF50;
-  background: #e8f5e9;
-  animation: pulse-green 1.5s infinite;
+/* === Layout principal === */
+.ue-order-content {
+  display: flex;
+  flex-direction: column; /* mobile default */
+  gap: var(--gap);
+  width: 100%;
+  min-height: 0;
+  flex: 1;
 }
 
-.mesa-pagado {
-  border-color: #9C27B0;
-  background: #f3e5f5;
+/* Left: ocupa TODO el espacio disponible */
+.ue-left {
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
 }
 
-.mesa-ocupada {
-  border-color: #757575;
-  background: #fafafa;
+/* Right: carrito compacto */
+.ue-right {
+  flex: 0 0 auto;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+
+  background: rgba(255,255,255,0.55);
+  border-radius: 16px;
+  padding: 14px;
+  border: 1px solid rgba(0,0,0,0.12);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
 }
 
-/* Animaciones de pulso */
-@keyframes pulse-orange {
-  0%, 100% {
-    box-shadow: 0 2px 8px rgba(255, 152, 0, 0.3);
-    border-color: #FF9800;
-  }
-  50% {
-    box-shadow: 0 4px 16px rgba(255, 152, 0, 0.6);
-    border-color: #FFB74D;
-  }
+/* Secciones */
+.ue-section {
+  background: rgba(255,255,255,0.55);
+  border-radius: 16px;
+  padding: 14px;
+  border: 1px solid rgba(0,0,0,0.12);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.06);
+
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+
+  width: 100%;
+  min-height: 0;
 }
 
-@keyframes pulse-blue {
-  0%, 100% {
-    box-shadow: 0 2px 8px rgba(33, 150, 243, 0.3);
-    border-color: #2196F3;
-  }
-  50% {
-    box-shadow: 0 4px 16px rgba(33, 150, 243, 0.6);
-    border-color: #64B5F6;
-  }
+.ue-section-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  flex-wrap: wrap;
 }
 
-@keyframes pulse-green {
-  0%, 100% {
-    box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
-    border-color: #4CAF50;
-  }
-  50% {
-    box-shadow: 0 4px 16px rgba(76, 175, 80, 0.7);
-    border-color: #81C784;
-  }
+.ue-section-title {
+  margin: 0;
+  font-size: clamp(1rem, 3vw, 1.25rem);
+  font-weight: 800;
+  flex: 1;
+  min-width: 120px;
 }
 
-/* Badge de estado */
-.mesa-badge {
+.ue-table-selected {
+  font-weight: 700;
+  opacity: 0.85;
+}
+
+/* =======================================================================
+   MESAS (GRID 4 COL EN DESKTOP, 2 EN MOBILE)
+   Nota: aquí evitamos COMPLETAMENTE position:absolute en .mesa-btn
+   ======================================================================= */
+
+.ue-mesas-wrap {
+  border-radius: 14px;
+  background: rgba(255,255,255,0.40);
+  border: 1px solid rgba(0,0,0,0.10);
+  padding: 10px;
+
+  /* compacto + scroll */
+  max-height: 260px;
+  overflow: auto;
+}
+
+/* si en tu Java usas ue-table-grid, esto manda */
+.ue-table-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(86px, 1fr)); /* mobile */
+  gap: 10px;
+  align-content: start;
+}
+
+/* Mesa botón (default, NO absolute) */
+.ue-table-grid .mesa-btn {
+  position: relative !important;
+  width: 100% !important;
+  height: 86px !important;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+
+  border-radius: 14px;
+  border: 2px solid rgba(0,0,0,0.12);
+  background: rgba(255,255,255,0.65);
+  cursor: pointer;
+
+  box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+  transition: 0.18s ease;
+}
+
+.ue-table-grid .mesa-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+}
+
+.ue-table-grid .mesa-icon {
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+}
+
+.ue-table-grid .mesa-label {
+  font-size: 13px;
+  font-weight: 800;
+  color: #111;
+}
+
+/* Seleccionada */
+.ue-table-grid .mesa-selected {
+  outline: 3px solid var(--accent-blue);
+  outline-offset: 2px;
+}
+
+/* Badge */
+.ue-table-grid .mesa-badge {
   position: absolute;
-  bottom: -8px;
+  bottom: 6px;
   left: 50%;
   transform: translateX(-50%);
-  padding: 2px 8px;
-  border-radius: 12px;
   font-size: 10px;
-  font-weight: bold;
+  font-weight: 900;
+  padding: 2px 6px;
+  border-radius: 999px;
   white-space: nowrap;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-  z-index: 10;
+  z-index: 1;
 }
 
-.badge-listo {
-  background: #4CAF50;
-  color: white;
+/* Animaciones */
+@keyframes pulse-orange {
+  0%, 100% { box-shadow: 0 2px 8px rgba(255, 152, 0, 0.3); border-color: #FF9800; }
+  50%      { box-shadow: 0 4px 16px rgba(255, 152, 0, 0.6); border-color: #FFB74D; }
+}
+@keyframes pulse-blue {
+  0%, 100% { box-shadow: 0 2px 8px rgba(33, 150, 243, 0.3); border-color: #2196F3; }
+  50%      { box-shadow: 0 4px 16px rgba(33, 150, 243, 0.6); border-color: #64B5F6; }
+}
+@keyframes pulse-green {
+  0%, 100% { box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3); border-color: #4CAF50; }
+  50%      { box-shadow: 0 4px 16px rgba(76, 175, 80, 0.7); border-color: #81C784; }
 }
 
-.badge-cocina {
-  background: #2196F3;
-  color: white;
-}
+/* =======================================================================
+   PRODUCTOS (buscador + lista con scroll)
+   ======================================================================= */
 
-.badge-pendiente {
-  background: #FF9800;
-  color: white;
-}
-
-.badge-pagado {
-  background: #9C27B0;
-  color: white;
-}
-
-.mesa-label {
-  display: block;
-  margin-top: 4px;
-  font-weight: bold;
-  font-size: 14px;
-  color: #333;
-}
-
-.mesa-icon {
-  width: 40px;
-  height: 40px;
-  display: block;
-  margin: 0 auto;
-}
-
-/* Card de pedido en el diálogo */
-.pedido-card {
-  padding: 12px;
-  margin: 8px 0;
-  border-radius: 8px;
-  background: #f5f5f5;
-  border-left: 4px solid #2196F3;
-}
-
-/* Canvas de mesas */
-.mesas-canvas {
-  position: relative;
+.ue-products-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  width: 100%;
+  min-height: 0;
   flex: 1;
-  background: #fafafa;
-  border-radius: 8px;
-  min-height: 500px;
 }
 
-/* Header de mesas */
-.mesas-header {
-  padding: 16px;
-  background: white;
+.ue-search {
+  width: 100%;
+}
+
+.ue-products-scroller {
+  height: auto;
+  min-height: 280px;
+  max-height: 45vh;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.ue-products {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  padding-right: 0.5rem;
+}
+
+.ue-product-card {
+  display: grid;
+  grid-template-columns: 60px 1fr 44px;
+  gap: 0.8rem;
+  align-items: center;
+
+  padding: 0.8rem;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.70);
+  border: 1px solid rgba(0,0,0,0.10);
+
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ue-product-card:hover {
+  box-shadow: 0 6px 16px rgba(0,0,0,0.10);
+  transform: translateY(-2px);
+}
+
+.ue-product-img {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
   border-radius: 8px;
-  margin-bottom: 16px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.ue-product-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.ue-product-name {
+  font-weight: 800;
+  font-size: 0.95rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ue-product-desc {
+  opacity: 0.7;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ue-product-price {
+  font-weight: 700;
+  opacity: 0.9;
+  font-size: 0.9rem;
+}
+
+.ue-product-add {
+  justify-self: end;
+}
+
+/* =======================================================================
+   CARRITO (compacto, ocupa "su" ancho y deja el resto al left)
+   ======================================================================= */
+
+.ue-cart-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.ue-cart-scroller {
+  height: auto;
+  min-height: 200px;
+  max-height: 40vh;
+  overflow-y: auto;
+  margin: 0.5rem 0;
+  flex: 1;
+}
+
+.ue-cart-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.ue-cart-empty {
+  text-align: center;
+  padding: 1.5rem;
+  opacity: 0.6;
+  font-size: 0.95rem;
+}
+
+.ue-cart-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.8rem;
+  align-items: center;
+
+  padding: 0.8rem;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.70);
+  border: 1px solid rgba(0,0,0,0.10);
+}
+
+.ue-cart-left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.ue-cart-name {
+  font-weight: 800;
+  font-size: 0.95rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ue-cart-unit {
+  opacity: 0.75;
+  font-size: 0.85rem;
+}
+
+.ue-cart-right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.ue-cart-qty {
+  max-width: 90px;
+}
+
+.ue-cart-subtotal {
+  font-weight: 800;
+  min-width: 70px;
+  text-align: right;
+  font-size: 0.9rem;
+}
+
+.ue-cart-del {
+  flex-shrink: 0;
+}
+
+.ue-cart-totals {
+  border-top: 2px solid rgba(0,0,0,0.10);
+  padding-top: 0.8rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.ue-cart-total-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+  font-weight: 900;
+  font-size: clamp(1rem, 3vw, 1.2rem);
+}
+
+.ue-cart-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  padding-top: 0.5rem;
+}
+
+.ue-cart-actions button {
+  width: 100%;
+  padding: 0.8rem;
+  font-size: clamp(0.85rem, 3vw, 1rem);
+}
+
+/* =======================================================================
+   RESPONSIVE BREAKPOINTS
+   ======================================================================= */
+
+/* Tablet+ => 2 columnas: left ocupa todo lo que no sea carrito */
+@media (min-width: 900px) {
+  .ue-order-content {
+    flex-direction: row;
+    align-items: stretch;
+  }
+
+  .ue-left {
+    flex: 1 1 auto;        /* ocupa el resto */
+    min-width: 520px;
+  }
+
+  .ue-right {
+    flex: 0 0 var(--cart-width-desktop);
+    width: var(--cart-width-desktop);
+    max-width: var(--cart-width-desktop);
+    height: calc(100vh - 210px);
+  }
+
+  .ue-table-grid {
+    grid-template-columns: repeat(4, minmax(86px, 1fr));
+  }
+
+  .ue-mesas-wrap {
+    max-height: 300px;
+  }
+
+  .ue-products-scroller {
+    max-height: calc(100vh - 520px);
+    min-height: 320px;
+  }
+
+  .ue-cart-scroller {
+    max-height: 45vh;
+  }
+}
+
+/* Desktop grande: carrito un poquito más */
+@media (min-width: 1200px) {
+  :root { --cart-width-desktop: 380px; }
+}
+
+/* Mobile pequeño */
+@media (max-width: 480px) {
+  [class$="-view"] {
+    padding: 1rem;
+    gap: 1rem;
+  }
+
+  .ue-order-view {
+    padding: 0.8rem;
+    gap: 1rem;
+  }
+
+  .ue-section {
+    padding: 0.8rem;
+    border-radius: 12px;
+  }
+
+  .ue-product-card {
+    grid-template-columns: 50px 1fr 40px;
+    gap: 0.6rem;
+    padding: 0.6rem;
+  }
+
+  .ue-product-img {
+    width: 50px;
+    height: 50px;
+  }
+}
+
+/* ================================
+   MESAS VIEW - GRID LIMPIO (NO ABSOLUTE)
+   ================================ */
+
+.mesas-view {
+  align-items: stretch !important;
+  padding: 1.6rem !important;
+  gap: 1.2rem !important;
+}
+
+.mesas-header {
+  background: rgba(255,255,255,0.55);
+  border: 1px solid rgba(0,0,0,0.12);
+  border-radius: 18px;
+  padding: 1rem 1.2rem;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.06);
 }
 
 .mesas-title {
   margin: 0;
-  color: #333;
+  font-size: 1.8rem;
+  font-weight: 800;
+}
+
+.mesas-add-btn {
+  border-radius: 16px;
+  padding: 0.7rem 1rem;
+  font-weight: 800;
+}
+
+/* Canvas container */
+.mesas-canvas {
+  width: 100%;
+  background: rgba(255,255,255,0.45);
+  border: 1px solid rgba(0,0,0,0.10);
+  border-radius: 18px;
+  padding: 16px;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.06);
+}
+
+/* Grid real */
+.mesas-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(200px, 1fr)); /* mobile */
+  gap: 14px;
+  align-content: start;
+}
+
+/* Mesa como card (forzamos NO absolute) */
+.mesas-view .mesa-btn,
+.mesas-view .mesa-card {
+  position: relative !important;
+  left: auto !important;
+  top: auto !important;
+
+  width: 100% !important;
+  height: 92px !important;
+  border-radius: 18px !important;
+
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  border: 2px solid rgba(0,0,0,0.12) !important;
+  background: rgba(255,255,255,0.70) !important;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.08) !important;
+  transition: 0.18s ease;
+}
+
+.mesas-view .mesa-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 26px rgba(0,0,0,0.12) !important;
+}
+
+.mesas-view .mesa-inner {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 14px;
+}
+
+.mesas-view .mesa-icon {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+}
+
+.mesas-view .mesa-texts {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.mesas-view .mesa-label {
+  font-weight: 900;
+  color: #111;
+  font-size: 1.05rem;
+}
+
+.mesas-view .mesa-badge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 900;
+}
+
+/* badge libre */
+.badge-libre { background: rgba(0,0,0,0.06); color: #222; }
+
+/* Estados (mantengo tu semántica) */
+.mesa-libre { border-color:#4CAF50 !important; background:#f1f8f4 !important; }
+.mesa-pendiente { border-color:#FF9800 !important; background:#fff8e1 !important; }
+.mesa-cocina { border-color:#2196F3 !important; background:#e3f2fd !important; }
+.mesa-lista { border-color:#4CAF50 !important; background:#e8f5e9 !important; }
+.mesa-pagado { border-color:#9C27B0 !important; background:#f3e5f5 !important; }
+.mesa-ocupada { border-color:#757575 !important; background:#fafafa !important; }
+
+/* badge colors */
+.badge-listo { background:#4CAF50; color:#fff; }
+.badge-cocina { background:#2196F3; color:#fff; }
+.badge-pendiente { background:#FF9800; color:#fff; }
+.badge-pagado { background:#9C27B0; color:#fff; }
+.badge-ocupada { background:#757575; color:#fff; }
+
+/* Responsive: 4 columnas en desktop */
+@media (min-width: 1000px) {
+  .mesas-grid {
+    grid-template-columns: repeat(4, minmax(220px, 1fr));
+  }
+}
+
+/* ================================
+   COCINA - CARDS + BOTON LISTO GRANDE
+   ================================ */
+
+.cocina-view {
+  align-items: stretch !important;
+  padding: 1.6rem !important;
+  gap: 1.2rem !important;
+}
+
+.cocina-title {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 900;
+}
+
+.cocina-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+}
+
+.cocina-empty {
+  padding: 1.2rem;
+  border-radius: 18px;
+  border: 1px solid rgba(0,0,0,0.10);
+  background: rgba(255,255,255,0.55);
+}
+
+.cocina-card {
+  background: rgba(255,255,255,0.65);
+  border: 1px solid rgba(0,0,0,0.12);
+  border-radius: 18px;
+  padding: 14px;
+  box-shadow: 0 10px 26px rgba(0,0,0,0.08);
+
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cocina-card-top {
+  gap: 12px;
+}
+
+.cocina-order-id {
+  font-size: 1.25rem;
+  font-weight: 900;
+}
+
+.cocina-meta {
+  display: block;
+  opacity: 0.75;
+  font-weight: 700;
+  margin-top: 2px;
+}
+
+.cocina-btn-big {
+  border-radius: 16px !important;
+  padding: 14px 18px !important;
+  font-size: 1.1rem !important;
+  font-weight: 1000 !important;
+  min-width: 150px;
+}
+
+.cocina-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cocina-items-title {
+  font-weight: 900;
+  font-size: 1rem;
+}
+
+.cocina-items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cocina-item-row {
+  border-radius: 14px;
+  border: 1px solid rgba(0,0,0,0.10);
+  background: rgba(255,255,255,0.70);
+  padding: 10px 12px;
+}
+
+.cocina-item-left {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 900;
+}
+
+.cocina-item-note {
+  margin-top: 6px;
+  opacity: 0.85;
+  font-weight: 700;
+  font-size: 0.92rem;
+}
+
+.cocina-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid rgba(0,0,0,0.10);
+  padding-top: 10px;
+  gap: 10px;
+}
+
+.cocina-status {
+  font-weight: 900;
+}
+
+.cocina-total {
+  font-weight: 1000;
+  font-size: 1.05rem;
 }

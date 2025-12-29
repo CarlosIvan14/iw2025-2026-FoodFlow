@@ -27,11 +27,10 @@ import com.vaadin.flow.server.VaadinSession;
 import java.util.ArrayList;
 import java.util.List;
 import pos.ui.MainLayout;
+import pos.auth.RouteGuard;
 
 @PageTitle("Menú Digital")
 @Route(value = "", layout = MainLayout.class)
-import pos.auth.RouteGuard;
-
 public class MenuView extends VerticalLayout implements RouteGuard {
 
   private Grid<Product> grid;

@@ -5,6 +5,7 @@ import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
@@ -16,8 +17,8 @@ import pos.ui.MainLayout;
 import pos.service.TableService;
 import pos.service.OrderService;
 
-import java.util.List;
 import java.util.Comparator;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @PageTitle("Mesas")
@@ -25,169 +26,127 @@ import java.util.stream.Collectors;
 @pos.auth.RequiredRoles(pos.domain.Role.MESERO)
 public class DashboardMesasView extends VerticalLayout implements RouteGuard {
 
+  private final Div canvas = new Div();
+
   public DashboardMesasView(TableService tables, OrderService orders) {
     addClassName("mesas-view");
     setSizeFull();
+    setPadding(true);
+    setSpacing(true);
 
+    // Header
     var title = new H2("Mapa de Mesas");
     title.addClassName("mesas-title");
 
     var addBtn = new Button("Agregar Mesa");
+    addBtn.addClassName("mesas-add-btn");
     addBtn.addClickListener(e -> showAddTableDialog(tables));
 
-    var header = new Div(title, addBtn);
+    var header = new HorizontalLayout(title, addBtn);
     header.addClassName("mesas-header");
-    header.getStyle().set("display", "flex");
-    header.getStyle().set("justify-content", "space-between");
-    header.getStyle().set("align-items", "center");
-    header.getStyle().set("width", "100%");
+    header.setWidthFull();
+    header.setAlignItems(Alignment.CENTER);
+    header.setJustifyContentMode(JustifyContentMode.BETWEEN);
 
-    var canvas = new Div();
+    // Canvas (GRID)
     canvas.addClassName("mesas-canvas");
+    canvas.addClassName("mesas-grid"); // <- selector importante para CSS
+    canvas.setWidthFull();
 
     add(header, canvas);
 
-    // Obtener todas las mesas y ordenarlas por prioridad de estado
+    refresh(tables, orders);
+  }
+
+  private void refresh(TableService tables, OrderService orders) {
+    canvas.removeAll();
+
     List<TableSpot> all = tables.all();
-    List<TableSpot> sortedTables = sortTablesByOrderPriority(all, orders);
+    List<TableSpot> sorted = sortTablesByOrderPriority(all, orders);
 
-    // Distribuir mesas en grid automáticamente
-    int index = 0;
-    int cols = 5; // 5 mesas por fila
-    int spacing = 120; // Espacio entre mesas
-    int startX = 50;
-    int startY = 50;
-
-    for (var t : sortedTables) {
-      int row = index / cols;
-      int col = index % cols;
-      int x = startX + (col * spacing);
-      int y = startY + (row * spacing);
-
-      var btn = createTableButton(t, orders);
-      // Sobrescribir posición solo visualmente
-      btn.getStyle().set("left", x + "px");
-      btn.getStyle().set("top", y + "px");
-      canvas.add(btn);
-      index++;
+    for (var t : sorted) {
+      canvas.add(createTableButton(t, orders));
     }
   }
 
   private List<TableSpot> sortTablesByOrderPriority(List<TableSpot> tables, OrderService orders) {
     return tables.stream()
-            .sorted(Comparator.comparingInt(t -> getTablePriority(t, orders)))
-            .collect(Collectors.toList());
+        .sorted(Comparator.comparingInt(t -> getTablePriority(t, orders)))
+        .collect(Collectors.toList());
   }
 
   private int getTablePriority(TableSpot table, OrderService orders) {
     List<Order> activeOrders = orders.findActiveOrdersByTable(table.getId());
+    if (activeOrders.isEmpty()) return 5;
 
-    if (activeOrders.isEmpty()) {
-      return 5; // Sin pedidos - menor prioridad
-    }
+    boolean hasListo = activeOrders.stream().anyMatch(o -> o.getStatus() == OrderStatus.LISTO);
+    boolean hasInPreparation = activeOrders.stream().anyMatch(o -> o.getStatus() == OrderStatus.IN_PREPARATION);
+    boolean hasPending = activeOrders.stream().anyMatch(o -> o.getStatus() == OrderStatus.PENDING);
+    boolean hasPagado = activeOrders.stream().anyMatch(o -> o.getStatus() == OrderStatus.PAGADO);
 
-    // Determinar el estado más urgente (menor número = mayor prioridad)
-    boolean hasListo = activeOrders.stream()
-            .anyMatch(o -> o.getStatus() == OrderStatus.LISTO);
-    boolean hasInPreparation = activeOrders.stream()
-            .anyMatch(o -> o.getStatus() == OrderStatus.IN_PREPARATION);
-    boolean hasPending = activeOrders.stream()
-            .anyMatch(o -> o.getStatus() == OrderStatus.PENDING);
-    boolean hasPagado = activeOrders.stream()
-            .anyMatch(o -> o.getStatus() == OrderStatus.PAGADO);
-
-    if (hasListo) return 0;           // LISTO (comida lista, esperando pago) - MÁXIMA PRIORIDAD
-    if (hasInPreparation) return 1;   // EN PREPARACIÓN (en cocina)
-    if (hasPending) return 2;         // PENDIENTE (recién ordenado)
-    if (hasPagado) return 3;          // PAGADO (esperando que cliente se vaya)
-
-    return 4; // Otros estados (DELIVERED, CANCELED, ON_THE_WAY)
+    if (hasListo) return 0;
+    if (hasInPreparation) return 1;
+    if (hasPending) return 2;
+    if (hasPagado) return 3;
+    return 4;
   }
 
   private Button createTableButton(TableSpot t, OrderService orders) {
     var btn = new Button();
     btn.addClassName("mesa-btn");
+    btn.addClassName("mesa-card"); // <- para que el CSS le de formato bonito
 
-    // Determinar estado y aplicar clase CSS
     String statusClass = getTableStatusClass(t, orders);
     String statusBadge = getTableStatusBadge(t, orders);
-
     btn.addClassName(statusClass);
 
     btn.getElement().setProperty("innerHTML",
-            "<img src='icons/mesa.png' class='mesa-icon'>" +
-                    "<span class='mesa-label'>" + t.getCode() + "</span>" +
-                    statusBadge
+        "<div class='mesa-inner'>" +
+            "<img src='icons/mesa.png' class='mesa-icon' alt='mesa'/>" +
+            "<div class='mesa-texts'>" +
+              "<span class='mesa-label'>" + t.getCode() + "</span>" +
+              statusBadge +
+            "</div>" +
+        "</div>"
     );
 
-    // NO establecemos left/top aquí, se hace en el constructor
     btn.addClickListener(e -> showOrdersFor(t, orders));
-
     return btn;
   }
 
   private String getTableStatusClass(TableSpot table, OrderService orders) {
     List<Order> activeOrders = orders.findActiveOrdersByTable(table.getId());
+    if (activeOrders.isEmpty()) return "mesa-libre";
 
-    if (activeOrders.isEmpty()) {
-      return "mesa-libre";
-    }
+    boolean hasListo = activeOrders.stream().anyMatch(o -> o.getStatus() == OrderStatus.LISTO);
+    boolean hasInPreparation = activeOrders.stream().anyMatch(o -> o.getStatus() == OrderStatus.IN_PREPARATION);
+    boolean hasPending = activeOrders.stream().anyMatch(o -> o.getStatus() == OrderStatus.PENDING);
+    boolean hasPagado = activeOrders.stream().anyMatch(o -> o.getStatus() == OrderStatus.PAGADO);
 
-    // Determinar el estado más urgente
-    boolean hasListo = activeOrders.stream()
-            .anyMatch(o -> o.getStatus() == OrderStatus.LISTO);
-    boolean hasInPreparation = activeOrders.stream()
-            .anyMatch(o -> o.getStatus() == OrderStatus.IN_PREPARATION);
-    boolean hasPending = activeOrders.stream()
-            .anyMatch(o -> o.getStatus() == OrderStatus.PENDING);
-    boolean hasPagado = activeOrders.stream()
-            .anyMatch(o -> o.getStatus() == OrderStatus.PAGADO);
-
-    if (hasListo) return "mesa-lista";              // Verde pulsante
-    if (hasInPreparation) return "mesa-cocina";     // Azul pulsante
-    if (hasPending) return "mesa-pendiente";        // Naranja pulsante
-    if (hasPagado) return "mesa-pagado";            // Púrpura
-
-    return "mesa-ocupada"; // Default para otros estados
+    if (hasListo) return "mesa-lista";
+    if (hasInPreparation) return "mesa-cocina";
+    if (hasPending) return "mesa-pendiente";
+    if (hasPagado) return "mesa-pagado";
+    return "mesa-ocupada";
   }
 
   private String getTableStatusBadge(TableSpot table, OrderService orders) {
     List<Order> activeOrders = orders.findActiveOrdersByTable(table.getId());
+    if (activeOrders.isEmpty()) return "<span class='mesa-badge badge-libre'>LIBRE</span>";
 
-    if (activeOrders.isEmpty()) {
-      return "";
-    }
-
-    // Contar pedidos por estado
-    long listoCount = activeOrders.stream()
-            .filter(o -> o.getStatus() == OrderStatus.LISTO).count();
-    long preparationCount = activeOrders.stream()
-            .filter(o -> o.getStatus() == OrderStatus.IN_PREPARATION).count();
-    long pendingCount = activeOrders.stream()
-            .filter(o -> o.getStatus() == OrderStatus.PENDING).count();
-    long pagadoCount = activeOrders.stream()
-            .filter(o -> o.getStatus() == OrderStatus.PAGADO).count();
+    long listoCount = activeOrders.stream().filter(o -> o.getStatus() == OrderStatus.LISTO).count();
+    long preparationCount = activeOrders.stream().filter(o -> o.getStatus() == OrderStatus.IN_PREPARATION).count();
+    long pendingCount = activeOrders.stream().filter(o -> o.getStatus() == OrderStatus.PENDING).count();
+    long pagadoCount = activeOrders.stream().filter(o -> o.getStatus() == OrderStatus.PAGADO).count();
 
     String badgeText = "";
     String badgeClass = "";
 
-    if (listoCount > 0) {
-      badgeText = "✓ LISTO";
-      badgeClass = "badge-listo";
-    } else if (preparationCount > 0) {
-      badgeText = "🍳 COCINA";
-      badgeClass = "badge-cocina";
-    } else if (pendingCount > 0) {
-      badgeText = "⏱ PENDIENTE";
-      badgeClass = "badge-pendiente";
-    } else if (pagadoCount > 0) {
-      badgeText = "💳 PAGADO";
-      badgeClass = "badge-pagado";
-    }
-
-    if (badgeText.isEmpty()) {
-      return "";
-    }
+    if (listoCount > 0) { badgeText = "✓ LISTO"; badgeClass = "badge-listo"; }
+    else if (preparationCount > 0) { badgeText = "🍳 COCINA"; badgeClass = "badge-cocina"; }
+    else if (pendingCount > 0) { badgeText = "⏱ PENDIENTE"; badgeClass = "badge-pendiente"; }
+    else if (pagadoCount > 0) { badgeText = "💳 PAGADO"; badgeClass = "badge-pagado"; }
+    else { badgeText = "OCUPADA"; badgeClass = "badge-ocupada"; }
 
     return "<span class='mesa-badge " + badgeClass + "'>" + badgeText + "</span>";
   }
@@ -204,18 +163,19 @@ public class DashboardMesasView extends VerticalLayout implements RouteGuard {
       if (codeField.isEmpty() || capacityField.isEmpty()) return;
 
       var t = pos.domain.TableSpot.builder()
-              .code(codeField.getValue())
-              .capacity(capacityField.getValue())
-              .x(50)
-              .y(50)
-              .state(pos.domain.TableState.FREE)
-              .build();
+          .code(codeField.getValue())
+          .capacity(capacityField.getValue())
+          .x(0)
+          .y(0)
+          .state(pos.domain.TableState.FREE)
+          .build();
 
       tables.save(t);
       dialog.close();
       com.vaadin.flow.component.UI.getCurrent().getPage().reload();
     });
 
+    saveBtn.addClassName("mesas-save-btn");
     var layout = new VerticalLayout(codeField, capacityField, saveBtn);
     dialog.add(layout);
     dialog.open();
@@ -226,19 +186,22 @@ public class DashboardMesasView extends VerticalLayout implements RouteGuard {
     dialog.setHeaderTitle("Pedidos de " + t.getCode());
 
     var wrap = new VerticalLayout();
+    wrap.setPadding(false);
+    wrap.setSpacing(true);
+    wrap.setWidthFull();
 
-    var activeOrders = orders.findActiveOrdersByTable(t.getId());  // ← CORREGIDO: era "table.getId()"
-
-    for (Order o : activeOrders) {
-      wrap.add(orderCard(o));
-    }
+    var activeOrders = orders.findActiveOrdersByTable(t.getId());
 
     if (activeOrders.isEmpty()) {
       wrap.add(new Span("Sin pedidos abiertos"));
+    } else {
+      for (Order o : activeOrders) {
+        wrap.add(orderCard(o));
+      }
     }
 
     dialog.add(wrap);
-    dialog.setWidth("600px");
+    dialog.setWidth("720px");
     dialog.open();
   }
 
@@ -248,9 +211,11 @@ public class DashboardMesasView extends VerticalLayout implements RouteGuard {
 
     String statusEmoji = getStatusEmoji(o.getStatus());
 
-    card.add(new Span(statusEmoji + " Pedido #" + o.getId() +
-            " | Estado: " + getStatusText(o.getStatus()) +
-            " | Total: $" + String.format("%.2f", o.getTotal())));
+    card.add(new Span(
+        statusEmoji + " Pedido #" + o.getId() +
+        " | Estado: " + getStatusText(o.getStatus()) +
+        " | Total: €" + String.format("%.2f", o.getTotal())
+    ));
 
     return card;
   }

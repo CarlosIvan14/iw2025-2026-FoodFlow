@@ -1,4 +1,4 @@
-package pos.config;
+package pos.domain;
 
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
@@ -6,7 +6,7 @@ import org.springframework.context.annotation.Configuration;
 import pos.domain.TableSpot;
 import pos.repository.TableRepository;
 
-@Configuration
+@Configuration("domainDataInitializer")
 public class DataInitializer {
 
     @Bean

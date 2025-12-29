@@ -53,6 +53,34 @@ public class UserService {
         return userRepository.findAll();
     }
 
+    public User save(User user) {
+        if (user.getId() == null) {
+            // Crear nuevo usuario
+            if (userRepository.existsByEmail(user.getEmail())) {
+                throw new IllegalArgumentException("Email already registered: " + user.getEmail());
+            }
+            user.setPassword(passwordEncoder.encode(user.getPassword()));
+            user.setActive(true);
+        } else {
+            // Actualizar usuario existente
+            User existing = get(user.getId());
+            if (!existing.getEmail().equalsIgnoreCase(user.getEmail()) &&
+                    userRepository.existsByEmail(user.getEmail())) {
+                throw new IllegalArgumentException("Email already registered: " + user.getEmail());
+            }
+            existing.setName(user.getName());
+            existing.setEmail(user.getEmail());
+            if (user.getPassword() != null && !user.getPassword().isEmpty()) {
+                existing.setPassword(passwordEncoder.encode(user.getPassword()));
+            }
+            if (user.getRole() != null) {
+                existing.setRole(user.getRole());
+            }
+            user = existing;
+        }
+        return userRepository.save(user);
+    }
+
     public User update(Long id, User payload) {
         User u = get(id);
 

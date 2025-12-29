@@ -5,7 +5,6 @@ public enum Role {
     MESERO,      // MESERO
     COCINERO,        // COCINERO
     REPARTIDOR,     // REPARTIDOR
-    CLIENT,       // CLIENTE
     CAJERO,
     CLIENTE
 }
