@@ -25,6 +25,7 @@ import pos.ui.MainLayout;
 
 @PageTitle("Ingredientes")
 @Route(value = "admin/ingredientes", layout = MainLayout.class)
+@pos.auth.RequiredRoles(pos.domain.Role.ADMIN)
 public class AdminIngredientView extends VerticalLayout implements RouteGuard {
 
     private final IngredientService service;

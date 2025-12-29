@@ -23,6 +23,7 @@ import pos.service.ProductService;
 
 @PageTitle("Productos")
 @Route(value = "admin/productos", layout = MainLayout.class)
+@pos.auth.RequiredRoles(pos.domain.Role.ADMIN)
 public class AdminInventarioView extends VerticalLayout implements RouteGuard {
 
   private final ProductService productService;

@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 
 @PageTitle("Mesas")
 @Route(value = "mesas", layout = MainLayout.class)
+@pos.auth.RequiredRoles(pos.domain.Role.MESERO)
 public class DashboardMesasView extends VerticalLayout implements RouteGuard {
 
   public DashboardMesasView(TableService tables, OrderService orders) {

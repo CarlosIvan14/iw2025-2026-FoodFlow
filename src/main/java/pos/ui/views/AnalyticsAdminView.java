@@ -16,6 +16,7 @@ import pos.ui.MainLayout;
 
 @PageTitle("Analytics")
 @Route(value = "admin/analytics", layout = MainLayout.class)
+@pos.auth.RequiredRoles(pos.domain.Role.ADMIN)
 @NpmPackage(value = "chart.js", version = "4.4.0")
 @JsModule("./charts-setup.js")
 public class AnalyticsAdminView extends VerticalLayout implements RouteGuard {

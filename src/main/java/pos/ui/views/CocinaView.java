@@ -13,6 +13,7 @@ import pos.service.OrderService;
 
 @PageTitle("Cocina")
 @Route(value = "cocina", layout = MainLayout.class)
+@pos.auth.RequiredRoles(pos.domain.Role.COCINERO)
 public class CocinaView extends VerticalLayout implements RouteGuard {
 
   public CocinaView(OrderService orders) {

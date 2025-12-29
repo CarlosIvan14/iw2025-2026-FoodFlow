@@ -36,6 +36,7 @@ import java.util.List;
 
 @PageTitle("Caja")
 @Route(value = "admin/caja", layout = MainLayout.class)
+@pos.auth.RequiredRoles(pos.domain.Role.CAJERO)
 public class AdminCajaView extends VerticalLayout implements RouteGuard {
 
   private final OrderService orderService;

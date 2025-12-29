@@ -30,6 +30,7 @@ import java.util.List;
 
 @PageTitle("Crear Orden")
 @Route(value = "ordenes", layout = MainLayout.class)
+@pos.auth.RequiredRoles(pos.domain.Role.MESERO)
 public class CrearOrdenView extends VerticalLayout implements RouteGuard {
 
   // Lista temporária em memória antes de salvar no banco
