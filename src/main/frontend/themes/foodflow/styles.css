@@ -437,6 +437,26 @@ vaadin-app-layout nav li {
   margin-bottom: 15px;
 }
 
+/* ===== Auth card pequeñas mejoras ===== */
+.auth-card {
+  width: 100%;
+  max-width: 440px;
+  margin: 8px;
+}
+
+/* Asegura que los enlaces del drawer sean legibles y con espacio */
+vaadin-app-layout nav a {
+  display: block;
+  padding: 12px 14px;
+  color: #000;
+  border-radius: 10px;
+}
+
+vaadin-app-layout nav a.active-link {
+  background: rgba(21,112,255,0.12);
+  font-weight: 700;
+}
+
 /* Estados de mesa con indicadores visuales */
 .mesa-btn {
   position: absolute;

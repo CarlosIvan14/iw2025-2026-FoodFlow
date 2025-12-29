@@ -2,6 +2,8 @@ package pos.ui;
 
 import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.applayout.AppLayout;
+import com.vaadin.flow.component.AttachEvent;
+import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.applayout.DrawerToggle;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -14,6 +16,8 @@ import pos.auth.AuthService;
 public class MainLayout extends AppLayout {
 
     private final AuthService authService;
+    private Nav nav;
+    private Footer footer;
 
     public MainLayout(AuthService authService) {
         this.authService = authService;
@@ -27,8 +31,19 @@ public class MainLayout extends AppLayout {
         createDrawer();
     }
 
+    @Override
+    protected void onAttach(AttachEvent attachEvent) {
+        super.onAttach(attachEvent);
+        // Rebuild drawer when component is attached to reflect current session/role
+        createDrawer();
+    }
+
     private void createDrawer() {
-        var nav = new Nav();
+        // Remove previous nav/footer if present (rebuild safe)
+        if (nav != null) remove(nav);
+        if (footer != null) remove(footer);
+
+        nav = new Nav();
         var list = new UnorderedList();
 
         list.getStyle().set("list-style", "none").set("padding", "0");
@@ -85,8 +100,7 @@ public class MainLayout extends AppLayout {
         nav.add(list);
         nav.getStyle().set("padding", "1rem");
 
-        var footer = createFooter();
-
+        footer = createFooter();
         addToDrawer(nav, footer);
     }
 
