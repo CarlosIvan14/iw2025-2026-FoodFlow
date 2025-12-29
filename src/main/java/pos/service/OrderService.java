@@ -1,15 +1,18 @@
+// src/main/java/pos/service/OrderService.java
 package pos.service;
 
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pos.domain.*;
 import pos.repository.*;
-import jakarta.persistence.EntityNotFoundException;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.util.List;
 
 @Service
@@ -31,18 +34,18 @@ public class OrderService {
 
     public Order createCustomerOrder(Boolean delivery, String address, String phone, List<OrderItem> items, Long userId) {
         User user = userRepository.findById(userId)
-            .orElseThrow(() -> new EntityNotFoundException("User not found id=" + userId));
+                .orElseThrow(() -> new EntityNotFoundException("User not found id=" + userId));
 
         // Cálculo del total
         BigDecimal total = items.stream()
-            .map(OrderItem::getTotal)
-            .reduce(BigDecimal.ZERO, BigDecimal::add);
+                .map(OrderItem::getTotal)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         Order order = Order.builder()
-            .customer(user)
-            .status(OrderStatus.IN_PREPARATION)
-            .total(total)
-            .build();
+                .customer(user)
+                .status(OrderStatus.IN_PREPARATION)
+                .total(total)
+                .build();
 
         // validar stock y decrementar
         for (OrderItem item : items) {
@@ -50,7 +53,7 @@ public class OrderService {
             Long prodId = item.getProduct().getId();
 
             Product dbProduct = productRepository.findById(prodId)
-                .orElseThrow(() -> new EntityNotFoundException("Producto no encontrado ID: " + prodId));
+                    .orElseThrow(() -> new EntityNotFoundException("Producto no encontrado ID: " + prodId));
 
             item.setProduct(dbProduct);
             item.setProductName(dbProduct.getName());
@@ -58,18 +61,18 @@ public class OrderService {
 
             int qty = item.getQuantity();
             if (dbProduct.getStock() < qty) {
-            throw new RuntimeException("Estoque insuficiente para: " + dbProduct.getName());
+                throw new RuntimeException("Estoque insuficiente para: " + dbProduct.getName());
             }
 
             dbProduct.setStock(dbProduct.getStock() - qty);
             productRepository.save(dbProduct);
 
             InventoryMovement movement = InventoryMovement.builder()
-                .product(dbProduct)
-                .quantity(qty)
-                .movementType(MovementType.EXIT)
-                .note("Venta cliente - Pedido provisional")
-                .build();
+                    .product(dbProduct)
+                    .quantity(qty)
+                    .movementType(MovementType.EXIT)
+                    .note("Venta cliente - Pedido provisional")
+                    .build();
             inventoryMovementRepository.save(movement);
         }
 
@@ -87,12 +90,11 @@ public class OrderService {
         ServiceSession session = serviceSessionService.findActiveSession(tableId)
                 .orElseGet(() -> serviceSessionService.openSession(tableId, user.getId()));
 
-        // Cálculo do total usando o novo método helper
+        // Cálculo do total
         BigDecimal total = items.stream()
                 .map(OrderItem::getTotal)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        // Prepara o objeto Pedido
         Order order = Order.builder()
                 .customer(user)
                 .serviceSession(session)
@@ -102,37 +104,30 @@ public class OrderService {
 
         // --- LÓGICA DE ESTOQUE ---
         for (OrderItem item : items) {
-            // Vincula o item ao pedido pai
             item.setOrder(order);
 
-            // 1. Validar e Buscar o produto real no banco para pegar o estoque ATUAL
-            // O frontend mandou o objeto Product, pegamos o ID dele.
             Long prodId = item.getProduct().getId();
 
             Product dbProduct = productRepository.findById(prodId)
                     .orElseThrow(() -> new EntityNotFoundException("Produto não encontrado ID: " + prodId));
 
-            // Atualizamos a referência do item para o produto gerenciado pelo Hibernate
             item.setProduct(dbProduct);
 
-            int quantityToSell = item.getQuantity(); // Corrigido de getQty para getQuantity
+            int quantityToSell = item.getQuantity();
 
-            // 2. VERIFICAÇÃO: Tem estoque suficiente?
             if (dbProduct.getStock() < quantityToSell) {
                 throw new RuntimeException("Estoque insuficiente para: " + dbProduct.getName()
                         + ". Disponível: " + dbProduct.getStock() + ", Solicitado: " + quantityToSell);
             }
 
-            // 3. Baixar estoque
             dbProduct.setStock(dbProduct.getStock() - quantityToSell);
             productRepository.save(dbProduct);
 
-            // 4. Registrar Movimento de Saída
             InventoryMovement movement = InventoryMovement.builder()
                     .product(dbProduct)
                     .quantity(quantityToSell)
                     .movementType(MovementType.EXIT)
-                    .note("Venda Mesa " + tableId + " - Pedido #" + order.getId()) // ID do pedido só existe após salvar, cuidado aqui (pode ser null antes do flush)
+                    .note("Venda Mesa " + tableId + " - Pedido (pendiente de ID)")
                     .build();
 
             inventoryMovementRepository.save(movement);
@@ -140,7 +135,6 @@ public class OrderService {
 
         order.setItems(items);
 
-        // Salva o pedido final e propaga as alterações (Cascade)
         Order savedOrder = orderRepository.save(order);
 
         log.info("Pedido criado com sucesso: ID {}", savedOrder.getId());
@@ -156,7 +150,6 @@ public class OrderService {
         return orderRepository.findAll();
     }
 
-    @Transactional
     public void updateStatus(Long id, OrderStatus status) {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Order not found id=" + id));
@@ -170,33 +163,52 @@ public class OrderService {
     }
 
     /**
+     * ✅ Para Analytics (evita LazyInitializationException):
+     * trae pedidos con items+product inicializados dentro de la transacción.
+     */
+    @Transactional(readOnly = true)
+    public List<Order> paidOrReadyWithItems(LocalDate start, LocalDate end) {
+        if (start == null) start = LocalDate.now().minusMonths(1);
+        if (end == null) end = LocalDate.now();
+        if (end.isBefore(start)) {
+            LocalDate tmp = start;
+            start = end;
+            end = tmp;
+        }
+
+        // Ajusta la zona si tu createdAt está en OffsetDateTime (con offset real)
+        ZoneId zone = ZoneId.systemDefault();
+
+        OffsetDateTime startDt = start.atStartOfDay(zone).toOffsetDateTime();
+        OffsetDateTime endDt = end.plusDays(1).atStartOfDay(zone).toOffsetDateTime().minusNanos(1);
+
+        return orderRepository.findWithItemsBetween(
+                startDt,
+                endDt,
+                List.of(OrderStatus.PAGADO, OrderStatus.LISTO)
+        );
+    }
+
+    /**
      * NOVO MÉTODO DE PAGAMENTO COMPLETO
-     * Substitui o antigo payOrder(id)
      */
     public void processPayment(Long orderId, PaymentMethod method, BigDecimal amountReceived, BigDecimal tip, String customerEmail) {
-        // 1. Busca o Pedido
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new EntityNotFoundException("Order not found id=" + orderId));
 
-        // 2. Validação simples (Garante que não estamos pagando um pedido já pago)
         if (order.getStatus() == OrderStatus.PAGADO) {
             throw new IllegalStateException("Esta orden ya ha sido pagada.");
         }
 
-        // 3. Cria a VENDA (Registro Financeiro)
         Sale sale = Sale.builder()
                 .date(OffsetDateTime.now())
                 .total(order.getTotal())
                 .user(order.getCustomer())
-                .order(order) // Link para rastreabilidade
+                .order(order)
                 .build();
 
-        saleRepository.save(sale); // Salva a venda primeiro para ter o ID
+        saleRepository.save(sale);
 
-        // 4. Cria o PAGAMENTO vinculado à Venda
-        // Nota: O 'amount' do pagamento é o valor da dívida (Total do Pedido).
-        // O troco é calculado apenas visualmente no frontend e não precisa ser salvo aqui,
-        // a menos que você queira auditar o fluxo de caixa físico.
         Payment payment = Payment.builder()
                 .sale(sale)
                 .method(method)
@@ -208,22 +220,15 @@ public class OrderService {
 
         paymentRepository.save(payment);
 
-        // 5. Atualiza o status do pedido para encerrar
         order.setStatus(OrderStatus.PAGADO);
         orderRepository.save(order);
 
         if (customerEmail != null && !customerEmail.isBlank()) {
             try {
-                // Gera o PDF em memória (byte array)
                 byte[] pdfBytes = pdfService.generateReceipt(order);
-
-                // Envia o e-mail (Async)
                 emailService.sendReceiptWithPdf(customerEmail, pdfBytes, orderId);
-
                 log.info("Processo de envio de recibo iniciado para: {}", customerEmail);
             } catch (Exception e) {
-                // Importante: Usamos try-catch para que, se o e-mail falhar (ex: sem internet),
-                // o pagamento NÃO seja cancelado. O pagamento já foi salvo acima.
                 log.error("Erro ao tentar enviar recibo por e-mail", e);
             }
         }
@@ -232,7 +237,7 @@ public class OrderService {
     }
 
     public List<Order> findActiveOrdersByTable(Long tableId) {
-        List<OrderStatus> finishedStatuses = List.of(OrderStatus.PAGADO, OrderStatus.CANCELED);
-        return orderRepository.findByTableIdAndStatusNotIn(tableId, finishedStatuses);
+    List<OrderStatus> finishedStatuses = List.of(OrderStatus.PAGADO, OrderStatus.CANCELED);
+    return orderRepository.findActiveByTableSpotIdAndStatusNotIn(tableId, finishedStatuses);
     }
 }

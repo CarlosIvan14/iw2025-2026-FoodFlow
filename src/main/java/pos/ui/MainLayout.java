@@ -71,7 +71,7 @@ public class MainLayout extends AppLayout {
         }
 
         if (hasRole(role, "MESERO") || hasRole(role, "ADMIN")) {
-            list.add(itemLink("Pedidos", "/ordenes"));
+            list.add(itemLink("Realizar Pedido", "/ordenes"));
             list.add(itemLink("Mesas", "/mesas"));
             list.add(itemLink("Caja", "/admin/caja"));
         }
@@ -88,6 +88,7 @@ public class MainLayout extends AppLayout {
             list.add(itemLink("Productos", "/admin/productos"));
             list.add(itemLink("Ingredientes", "/admin/ingredientes"));
             list.add(itemLink("Anállisis de ventas", "/admin/analytics"));
+            list.add(itemLink("Historial de Pedidos", "admin/historial-pedidos"));
             list.add(itemLink("Usuarios", "admin/usuarios"));
         }
 
@@ -95,10 +96,6 @@ public class MainLayout extends AppLayout {
         if (hasRole(role, "CLIENT") || hasRole(role, "CLIENTE")) {
             list.add(itemLink("Mis Pedidos", "/mis-pedidos"));
         }
-        //list.add(itemLink("Analytics", "/admin/analytics"));
-        //list.add(itemLink("Login", "/login"));
-        //list.add(itemLink("Registro", "/register"));
-        //list.add(itemLink("Reportes", "/reports"));
 
         // Separador visual
         var separador = new ListItem();

@@ -1,56 +1,57 @@
-// src/main/frontend/charts-setup.js
 import Chart from "chart.js/auto";
 
 window.__posCharts = window.__posCharts || {};
 
-window.renderPOSCharts = (salesId, labels, data, rolesId, roleLabels, roleData) => {
-  // helpers
-  const getCanvas = (id) => document.getElementById(id);
-  const destroyIfExists = (key) => {
-    if (window.__posCharts[key]) {
-      window.__posCharts[key].destroy();
-      window.__posCharts[key] = null;
-    }
-  };
+const destroyIfExists = (key) => {
+  if (window.__posCharts[key]) {
+    window.__posCharts[key].destroy();
+    window.__posCharts[key] = null;
+  }
+};
 
-  const salesCanvas = getCanvas(salesId);
-  const rolesCanvas = getCanvas(rolesId);
-  if (!salesCanvas || !rolesCanvas) return;
+window.renderSalesCharts = (
+  dateCanvasId,
+  title1,
+  dateLabels,
+  dateData,
+  productCanvasId,
+  productLabels,
+  productData
+) => {
+  const dateCanvas = document.getElementById(dateCanvasId);
+  const prodCanvas = document.getElementById(productCanvasId);
+  if (!dateCanvas || !prodCanvas) return;
 
-  // Si el canvas está oculto o sin tamaño, Chart.js no dibuja bien
-  const salesRect = salesCanvas.getBoundingClientRect();
-  const rolesRect = rolesCanvas.getBoundingClientRect();
-  if (salesRect.width === 0 || rolesRect.width === 0) {
+  const r1 = dateCanvas.getBoundingClientRect();
+  const r2 = prodCanvas.getBoundingClientRect();
+  if (r1.width === 0 || r2.width === 0) {
     requestAnimationFrame(() =>
-      window.renderPOSCharts(salesId, labels, data, rolesId, roleLabels, roleData)
+      window.renderSalesCharts(
+        dateCanvasId, title1, dateLabels, dateData,
+        productCanvasId, productLabels, productData
+      )
     );
     return;
   }
 
-  destroyIfExists("sales");
-  destroyIfExists("roles");
+  destroyIfExists("salesByDate");
+  destroyIfExists("salesByProduct");
 
-  window.__posCharts.sales = new Chart(salesCanvas, {
-    type: "bar",
+  window.__posCharts.salesByDate = new Chart(dateCanvas, {
+    type: "line",
     data: {
-      labels: Array.from(labels),
-      datasets: [{ label: "Ventas", data: Array.from(data) }],
+      labels: Array.from(dateLabels),
+      datasets: [{ label: title1, data: Array.from(dateData) }],
     },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-    },
+    options: { responsive: true, maintainAspectRatio: false },
   });
 
-  window.__posCharts.roles = new Chart(rolesCanvas, {
-    type: "doughnut",
+  window.__posCharts.salesByProduct = new Chart(prodCanvas, {
+    type: "bar",
     data: {
-      labels: Array.from(roleLabels),
-      datasets: [{ data: Array.from(roleData) }],
+      labels: Array.from(productLabels),
+      datasets: [{ label: "Ventas por producto", data: Array.from(productData) }],
     },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-    },
+    options: { responsive: true, maintainAspectRatio: false },
   });
 };
