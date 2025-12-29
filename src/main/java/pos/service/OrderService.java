@@ -30,8 +30,53 @@ public class OrderService {
     private final EmailService emailService;
 
     public Order createCustomerOrder(Boolean delivery, String address, String phone, List<OrderItem> items, Long userId) {
-        // Implementação futura para delivery...
-        return new Order();
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new EntityNotFoundException("User not found id=" + userId));
+
+        // Cálculo del total
+        BigDecimal total = items.stream()
+            .map(OrderItem::getTotal)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        Order order = Order.builder()
+            .customer(user)
+            .status(OrderStatus.IN_PREPARATION)
+            .total(total)
+            .build();
+
+        // validar stock y decrementar
+        for (OrderItem item : items) {
+            item.setOrder(order);
+            Long prodId = item.getProduct().getId();
+
+            Product dbProduct = productRepository.findById(prodId)
+                .orElseThrow(() -> new EntityNotFoundException("Producto no encontrado ID: " + prodId));
+
+            item.setProduct(dbProduct);
+            item.setProductName(dbProduct.getName());
+            item.setUnitPrice(dbProduct.getPrice());
+
+            int qty = item.getQuantity();
+            if (dbProduct.getStock() < qty) {
+            throw new RuntimeException("Estoque insuficiente para: " + dbProduct.getName());
+            }
+
+            dbProduct.setStock(dbProduct.getStock() - qty);
+            productRepository.save(dbProduct);
+
+            InventoryMovement movement = InventoryMovement.builder()
+                .product(dbProduct)
+                .quantity(qty)
+                .movementType(MovementType.EXIT)
+                .note("Venta cliente - Pedido provisional")
+                .build();
+            inventoryMovementRepository.save(movement);
+        }
+
+        order.setItems(items);
+        Order saved = orderRepository.save(order);
+        log.info("Pedido cliente creado con ID={}", saved.getId());
+        return saved;
     }
 
     public Order createTableOrder(Long tableId, List<OrderItem> items, Long userId) {
