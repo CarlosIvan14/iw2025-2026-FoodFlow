@@ -11,8 +11,8 @@ public interface RouteGuard extends BeforeEnterObserver {
   default void beforeEnter(BeforeEnterEvent event) {
     var us = VaadinSession.getCurrent().getAttribute(AuthService.UserSession.class);
     var path = event.getLocation().getPath();
-    // Público: login, register, menu (root)
-    if (path.isEmpty() || path.startsWith("login") || path.startsWith("register") || path.startsWith("menu")) return;
+    // Público: login, register
+    if (path.startsWith("login") || path.startsWith("register")) return;
     if (us == null) { event.rerouteTo("login"); return; }
 
     // Si la vista declara @RequiredRoles, validar

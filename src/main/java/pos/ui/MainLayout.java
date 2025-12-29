@@ -33,13 +33,37 @@ public class MainLayout extends AppLayout {
 
         list.getStyle().set("list-style", "none").set("padding", "0");
 
-        list.add(itemLink("Menú Digital", "/"));
-        list.add(itemLink("Pedidos", "/ordenes"));
-        list.add(itemLink("Mesas", "/mesas"));
-        list.add(itemLink("Cocina", "/cocina"));
-        list.add(itemLink("Caja", "/admin/caja"));
-        list.add(itemLink("Productos", "/admin/productos"));
-        list.add(itemLink("Ingredientes", "/admin/ingredientes"));
+        // Mostrar opciones según rol
+        String role = authService.currentRole();
+
+        // Menú siempre disponible para usuarios autenticados
+        if (authService.isAuthenticated()) {
+            list.add(itemLink("Menú Digital", "/"));
+        }
+
+        if (hasRole(role, "MESERO") || hasRole(role, "ADMIN")) {
+            list.add(itemLink("Pedidos", "/ordenes"));
+            list.add(itemLink("Mesas", "/mesas"));
+        }
+
+        if (hasRole(role, "COCINERO") || hasRole(role, "ADMIN")) {
+            list.add(itemLink("Cocina", "/cocina"));
+        }
+
+        if (hasRole(role, "CAJERO") || hasRole(role, "ADMIN")) {
+            list.add(itemLink("Caja", "/admin/caja"));
+        }
+
+        if (hasRole(role, "ADMIN")) {
+            list.add(itemLink("Productos", "/admin/productos"));
+            list.add(itemLink("Ingredientes", "/admin/ingredientes"));
+            list.add(itemLink("Analytics", "/admin/analytics"));
+        }
+
+        // Opciones para cliente (si existe rol CLIENT o CLIENTE)
+        if (hasRole(role, "CLIENT") || hasRole(role, "CLIENTE")) {
+            list.add(itemLink("Mis Pedidos", "/mis-pedidos"));
+        }
         //list.add(itemLink("Analytics", "/admin/analytics"));
         //list.add(itemLink("Login", "/login"));
         //list.add(itemLink("Registro", "/register"));
@@ -89,6 +113,11 @@ public class MainLayout extends AppLayout {
         li.getStyle().set("margin-bottom", "0.3rem");
 
         return li;
+    }
+
+    private boolean hasRole(String role, String expected) {
+        if (role == null) return false;
+        return role.equalsIgnoreCase(expected);
     }
 
     private Footer createFooter() {

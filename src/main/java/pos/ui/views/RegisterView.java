@@ -91,7 +91,19 @@ public class RegisterView extends VerticalLayout implements BeforeEnterObserver 
         form.setResponsiveSteps(new FormLayout.ResponsiveStep("0", 1));
         form.setMaxWidth("400px");
 
-        add(title, form, registerButton, new RouterLink("¿Ya tienes cuenta? Inicia sesión", LoginView.class));
+        // Card container para centrar y dar estilo similar al LoginView
+        var card = new Div();
+        card.addClassName("auth-card");
+        card.getStyle()
+            .set("background", "var(--lumo-base-color)")
+            .set("padding", "24px")
+            .set("border-radius", "8px")
+            .set("box-shadow", "0 6px 18px rgba(0,0,0,0.08)")
+            .set("max-width", "440px");
+
+        card.add(title, form, registerButton, new RouterLink("¿Ya tienes cuenta? Inicia sesión", LoginView.class));
+
+        add(card);
     }
 
     @Override
