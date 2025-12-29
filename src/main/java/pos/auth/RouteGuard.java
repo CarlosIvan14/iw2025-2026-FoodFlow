@@ -21,6 +21,8 @@ public interface RouteGuard extends BeforeEnterObserver {
     if (ann != null) {
       String currentRole = us.role();
       if (currentRole == null) { event.rerouteTo("login"); return; }
+      // Permitir acceso global para ADMIN
+      if ("ADMIN".equalsIgnoreCase(currentRole)) return;
       boolean ok = Arrays.stream(ann.value()).anyMatch(r -> r.name().equalsIgnoreCase(currentRole));
       if (!ok) {
         event.rerouteTo("login");

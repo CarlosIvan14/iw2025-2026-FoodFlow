@@ -30,7 +30,9 @@ import pos.ui.MainLayout;
 
 @PageTitle("Menú Digital")
 @Route(value = "", layout = MainLayout.class)
-public class MenuView extends VerticalLayout {
+import pos.auth.RouteGuard;
+
+public class MenuView extends VerticalLayout implements RouteGuard {
 
   private Grid<Product> grid;
   private final MenuService menuService;

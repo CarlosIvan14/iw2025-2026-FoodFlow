@@ -72,13 +72,15 @@ public class MainLayout extends AppLayout {
         // Separador visual
         var separador = new ListItem();
         separador.getStyle()
-                .set("border-top", "1px solid #e0e0e0")
-                .set("margin-top", "0.5rem")
-                .set("margin-bottom", "0.5rem");
+            .set("border-top", "1px solid #e0e0e0")
+            .set("margin-top", "0.5rem")
+            .set("margin-bottom", "0.5rem");
         list.add(separador);
 
-        // Botão de logout como item do menu
-        list.add(itemLogout());
+        // Botón de logout sólo si hay sesión
+        if (authService.isAuthenticated()) {
+            list.add(itemLogout());
+        }
 
         nav.add(list);
         nav.getStyle().set("padding", "1rem");
