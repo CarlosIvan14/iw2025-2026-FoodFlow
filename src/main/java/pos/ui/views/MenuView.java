@@ -19,6 +19,13 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import pos.domain.Product;
 import pos.service.MenuService;
+import pos.service.OrderService;
+import pos.auth.AuthService;
+import pos.domain.OrderItem;
+import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.server.VaadinSession;
+import java.util.ArrayList;
+import java.util.List;
 import pos.ui.MainLayout;
 
 @PageTitle("Menú Digital")
@@ -27,9 +34,16 @@ public class MenuView extends VerticalLayout {
 
   private Grid<Product> grid;
   private final MenuService menuService;
+  private final OrderService orderService;
+  private final AuthService authService;
 
-  public MenuView(MenuService menu) {
+  private final List<OrderItem> cart = new ArrayList<>();
+  private Span cartBadge;
+
+  public MenuView(MenuService menu, OrderService orders, AuthService auth) {
     this.menuService = menu;
+    this.orderService = orders;
+    this.authService = auth;
     addClassName("menu-view");
     setSizeFull();
     setPadding(false);
@@ -75,11 +89,12 @@ public class MenuView extends VerticalLayout {
     contentLayout.setPadding(true);
     contentLayout.setSpacing(true);
 
-    contentLayout.add(
-            createFilterSection(),
-            createGrid(),
-            createActionButton()
-    );
+        contentLayout.add(
+          createFilterSection(),
+          createGrid(),
+          createCartBadge(),
+          createActionButton()
+        );
 
     return contentLayout;
   }
@@ -192,6 +207,26 @@ public class MenuView extends VerticalLayout {
             .setTextAlign(com.vaadin.flow.component.grid.ColumnTextAlign.END);
 
     grid.setItems(menuService.list());
+    // Añadir columna con botón para añadir al carrito
+    grid.addColumn(new ComponentRenderer<>(product -> {
+      var addBtn = new Button("Añadir");
+      addBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+      addBtn.addClickListener(evt -> {
+        OrderItem item = OrderItem.builder()
+            .product(product)
+            .productName(product.getName())
+            .unitPrice(product.getPrice())
+            .quantity(1)
+            .build();
+
+        cart.add(item);
+        // Persistir carrito en sesión para que otras vistas lo puedan leer
+        VaadinSession.getCurrent().setAttribute("clientCart", new ArrayList<>(cart));
+        updateCartBadge();
+        Notification.show("Añadido al carrito: " + product.getName(), 1500, Notification.Position.TOP_END);
+      });
+      return addBtn;
+    })).setHeader("Acción");
     return grid;
   }
 
@@ -213,11 +248,44 @@ public class MenuView extends VerticalLayout {
             .set("border-radius", "8px")
             .set("padding", "12px 24px");
 
-    orderBtn.addClickListener(e ->
-            getUI().ifPresent(ui -> ui.navigate("ordenes"))
-    );
+    orderBtn.addClickListener(e -> {
+      if (cart.isEmpty()) {
+        Notification.show("El carrito está vacío.", 1500, Notification.Position.TOP_CENTER);
+        return;
+      }
+
+      if (!authService.isAuthenticated()) {
+        // Llevar al login para que el usuario se autentique
+        getUI().ifPresent(ui -> ui.navigate("login"));
+        return;
+      }
+
+      try {
+        Long userId = authService.currentUserId();
+        // Guardar carrito en sesión y delegar al flujo de creación (CrearOrdenView leerá la sesión)
+        VaadinSession.getCurrent().setAttribute("clientCart", new ArrayList<>(cart));
+        getUI().ifPresent(ui -> ui.navigate("ordenes"));
+        return;
+      } catch (Exception ex) {
+        Notification.show("Error creando el pedido: " + ex.getMessage(), 4000, Notification.Position.TOP_CENTER);
+      }
+    });
 
     actionLayout.add(orderBtn);
     return actionLayout;
+  }
+
+  private HorizontalLayout createCartBadge() {
+    var hl = new HorizontalLayout();
+    hl.setWidthFull();
+    hl.setJustifyContentMode(FlexComponent.JustifyContentMode.END);
+    cartBadge = new Span("Carrito: 0");
+    cartBadge.getStyle().set("font-weight", "600").set("margin-right", "8px");
+    hl.add(cartBadge);
+    return hl;
+  }
+
+  private void updateCartBadge() {
+    cartBadge.setText("Carrito: " + cart.size());
   }
 }

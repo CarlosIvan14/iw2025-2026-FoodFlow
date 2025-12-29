@@ -64,6 +64,7 @@ public class CrearOrdenView extends VerticalLayout implements RouteGuard {
     grid.addColumn(OrderItem::getProductName)
             .setHeader("Producto")
             .setAutoWidth(true)
+    import com.vaadin.flow.server.VaadinSession;
             .setFlexGrow(1);
 
     // 2. Quantidade EDITÁVEL
@@ -146,6 +147,16 @@ public class CrearOrdenView extends VerticalLayout implements RouteGuard {
                 .build();
 
         items.add(item);
+        // Recuperar carrito desde sesión si existe (flujo cliente desde MenuView)
+        var sessionCart = (List<OrderItem>) VaadinSession.getCurrent().getAttribute("clientCart");
+        if (sessionCart != null && !sessionCart.isEmpty()) {
+          items.addAll(sessionCart);
+          // eliminar para no reusar la misma lista en próximos accesos
+          VaadinSession.getCurrent().setAttribute("clientCart", null);
+        }
+
+        grid.setItems(items);
+
         grid.setItems(items); // Recarrega a grid com a nova lista
 
         Notification.show("Agregado: " + p.getName(), 2000, Notification.Position.BOTTOM_START)
