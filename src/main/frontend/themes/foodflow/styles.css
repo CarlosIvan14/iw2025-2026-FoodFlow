@@ -131,10 +131,9 @@ vaadin-grid::part(row):hover {
 }
 
 /* =======================================================================
-   DRAWER / MENU LATERAL (SE MANTIENE)
+   DRAWER / MENU LATERAL
    ======================================================================= */
 
-/* === DRAWER FLOTANTE GLASS === */
 ::part(navbar) {
   background: transparent !important;
   box-shadow: none !important;
@@ -155,7 +154,6 @@ vaadin-grid::part(row):hover {
   border-radius: 0 24px 24px 0;
 }
 
-/* === ITEMS DEL MENU === */
 vaadin-app-layout vaadin-drawer-toggle + nav a {
   display: block;
   padding: 12px 18px;
@@ -201,7 +199,6 @@ vaadin-app-layout nav a.active-link {
   font-weight: 700;
 }
 
-/* floating toggle / navbar */
 .floating-navbar {
   backdrop-filter: blur(25px) saturate(180%);
   -webkit-backdrop-filter: blur(25px) saturate(180%);
@@ -266,7 +263,6 @@ vaadin-app-layout nav a.active-link {
   flex: 1;
 }
 
-/* Left: ocupa TODO el espacio disponible */
 .ue-left {
   flex: 1 1 auto;
   width: 100%;
@@ -278,7 +274,6 @@ vaadin-app-layout nav a.active-link {
   gap: var(--gap);
 }
 
-/* Right: carrito compacto */
 .ue-right {
   flex: 0 0 auto;
   width: 100%;
@@ -296,7 +291,6 @@ vaadin-app-layout nav a.active-link {
   gap: 0.8rem;
 }
 
-/* Secciones */
 .ue-section {
   background: rgba(255,255,255,0.55);
   border-radius: 16px;
@@ -334,8 +328,7 @@ vaadin-app-layout nav a.active-link {
 }
 
 /* =======================================================================
-   MESAS (GRID 4 COL EN DESKTOP, 2 EN MOBILE)
-   Nota: aquí evitamos COMPLETAMENTE position:absolute en .mesa-btn
+   MESAS (UE)
    ======================================================================= */
 
 .ue-mesas-wrap {
@@ -343,21 +336,17 @@ vaadin-app-layout nav a.active-link {
   background: rgba(255,255,255,0.40);
   border: 1px solid rgba(0,0,0,0.10);
   padding: 10px;
-
-  /* compacto + scroll */
   max-height: 260px;
   overflow: auto;
 }
 
-/* si en tu Java usas ue-table-grid, esto manda */
 .ue-table-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(86px, 1fr)); /* mobile */
+  grid-template-columns: repeat(2, minmax(86px, 1fr));
   gap: 10px;
   align-content: start;
 }
 
-/* Mesa botón (default, NO absolute) */
 .ue-table-grid .mesa-btn {
   position: relative !important;
   width: 100% !important;
@@ -395,13 +384,11 @@ vaadin-app-layout nav a.active-link {
   color: #111;
 }
 
-/* Seleccionada */
 .ue-table-grid .mesa-selected {
   outline: 3px solid var(--accent-blue);
   outline-offset: 2px;
 }
 
-/* Badge */
 .ue-table-grid .mesa-badge {
   position: absolute;
   bottom: 6px;
@@ -415,31 +402,21 @@ vaadin-app-layout nav a.active-link {
   z-index: 1;
 }
 
-/* Animaciones */
-@keyframes pulse-orange {
-  0%, 100% { box-shadow: 0 2px 8px rgba(255, 152, 0, 0.3); border-color: #FF9800; }
-  50%      { box-shadow: 0 4px 16px rgba(255, 152, 0, 0.6); border-color: #FFB74D; }
-}
-@keyframes pulse-blue {
-  0%, 100% { box-shadow: 0 2px 8px rgba(33, 150, 243, 0.3); border-color: #2196F3; }
-  50%      { box-shadow: 0 4px 16px rgba(33, 150, 243, 0.6); border-color: #64B5F6; }
-}
-@keyframes pulse-green {
-  0%, 100% { box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3); border-color: #4CAF50; }
-  50%      { box-shadow: 0 4px 16px rgba(76, 175, 80, 0.7); border-color: #81C784; }
-}
-
 /* =======================================================================
-   PRODUCTOS (buscador + lista con scroll)
+   PRODUCTOS
    ======================================================================= */
 
 .ue-products-wrap {
   display: flex;
-  flex-direction: column;
-  gap: 0.8rem;
   width: 100%;
   min-height: 0;
   flex: 1;
+}
+
+/* ✅ FIX IMPORTANTE: el wrap debe ser columna para que buscador+lista llenen ancho */
+.ue-products-wrap {
+  flex-direction: column !important;
+  align-items: stretch !important;
 }
 
 .ue-search {
@@ -454,11 +431,16 @@ vaadin-app-layout nav a.active-link {
   flex: 1;
 }
 
+/* ✅ Asegura que la lista use todo el ancho */
 .ue-products {
   display: flex;
   flex-direction: column;
   gap: 0.8rem;
   padding-right: 0.5rem;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box;
 }
 
 .ue-product-card {
@@ -466,6 +448,10 @@ vaadin-app-layout nav a.active-link {
   grid-template-columns: 60px 1fr 44px;
   gap: 0.8rem;
   align-items: center;
+
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box;
 
   padding: 0.8rem;
   border-radius: 12px;
@@ -521,8 +507,27 @@ vaadin-app-layout nav a.active-link {
   justify-self: end;
 }
 
+/* ✅ FIX: Searchbar Vaadin a ancho completo */
+.ue-search vaadin-text-field,
+.ue-search vaadin-combo-box,
+.ue-search vaadin-text-area {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+.ue-search vaadin-text-field::part(input-field),
+.ue-search vaadin-combo-box::part(input-field) {
+  width: 100% !important;
+}
+
+/* ✅ Extra: evita que hijos de la sección se “encojan” */
+.ue-section > * {
+  max-width: 100% !important;
+  min-width: 0 !important;
+}
+
 /* =======================================================================
-   CARRITO (compacto, ocupa "su" ancho y deja el resto al left)
+   CARRITO
    ======================================================================= */
 
 .ue-cart-header {
@@ -642,10 +647,9 @@ vaadin-app-layout nav a.active-link {
 }
 
 /* =======================================================================
-   RESPONSIVE BREAKPOINTS
+   RESPONSIVE
    ======================================================================= */
 
-/* Tablet+ => 2 columnas: left ocupa todo lo que no sea carrito */
 @media (min-width: 900px) {
   .ue-order-content {
     flex-direction: row;
@@ -653,7 +657,7 @@ vaadin-app-layout nav a.active-link {
   }
 
   .ue-left {
-    flex: 1 1 auto;        /* ocupa el resto */
+    flex: 1 1 auto;
     min-width: 520px;
   }
 
@@ -682,12 +686,10 @@ vaadin-app-layout nav a.active-link {
   }
 }
 
-/* Desktop grande: carrito un poquito más */
 @media (min-width: 1200px) {
   :root { --cart-width-desktop: 380px; }
 }
 
-/* Mobile pequeño */
 @media (max-width: 480px) {
   [class$="-view"] {
     padding: 1rem;
@@ -746,7 +748,6 @@ vaadin-app-layout nav a.active-link {
   font-weight: 800;
 }
 
-/* Canvas container */
 .mesas-canvas {
   width: 100%;
   background: rgba(255,255,255,0.45);
@@ -756,15 +757,13 @@ vaadin-app-layout nav a.active-link {
   box-shadow: 0 8px 25px rgba(0,0,0,0.06);
 }
 
-/* Grid real */
 .mesas-grid {
   display: grid !important;
-  grid-template-columns: repeat(2, minmax(200px, 1fr)); /* mobile */
+  grid-template-columns: repeat(2, minmax(200px, 1fr));
   gap: 14px;
   align-content: start;
 }
 
-/* Mesa como card (forzamos NO absolute) */
 .mesas-view .mesa-btn,
 .mesas-view .mesa-card {
   position: relative !important;
@@ -827,10 +826,8 @@ vaadin-app-layout nav a.active-link {
   font-weight: 900;
 }
 
-/* badge libre */
 .badge-libre { background: rgba(0,0,0,0.06); color: #222; }
 
-/* Estados (mantengo tu semántica) */
 .mesa-libre { border-color:#4CAF50 !important; background:#f1f8f4 !important; }
 .mesa-pendiente { border-color:#FF9800 !important; background:#fff8e1 !important; }
 .mesa-cocina { border-color:#2196F3 !important; background:#e3f2fd !important; }
@@ -838,14 +835,12 @@ vaadin-app-layout nav a.active-link {
 .mesa-pagado { border-color:#9C27B0 !important; background:#f3e5f5 !important; }
 .mesa-ocupada { border-color:#757575 !important; background:#fafafa !important; }
 
-/* badge colors */
 .badge-listo { background:#4CAF50; color:#fff; }
 .badge-cocina { background:#2196F3; color:#fff; }
 .badge-pendiente { background:#FF9800; color:#fff; }
 .badge-pagado { background:#9C27B0; color:#fff; }
 .badge-ocupada { background:#757575; color:#fff; }
 
-/* Responsive: 4 columnas en desktop */
 @media (min-width: 1000px) {
   .mesas-grid {
     grid-template-columns: repeat(4, minmax(220px, 1fr));

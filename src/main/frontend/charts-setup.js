@@ -15,6 +15,7 @@ window.renderSalesCharts = (
   dateLabels,
   dateData,
   productCanvasId,
+  title2,
   productLabels,
   productData
 ) => {
@@ -28,7 +29,7 @@ window.renderSalesCharts = (
     requestAnimationFrame(() =>
       window.renderSalesCharts(
         dateCanvasId, title1, dateLabels, dateData,
-        productCanvasId, productLabels, productData
+        productCanvasId, title2, productLabels, productData
       )
     );
     return;
@@ -50,7 +51,7 @@ window.renderSalesCharts = (
     type: "bar",
     data: {
       labels: Array.from(productLabels),
-      datasets: [{ label: "Ventas por producto", data: Array.from(productData) }],
+      datasets: [{ label: title2, data: Array.from(productData) }],
     },
     options: { responsive: true, maintainAspectRatio: false },
   });

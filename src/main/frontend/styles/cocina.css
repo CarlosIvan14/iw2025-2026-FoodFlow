@@ -1,0 +1,346 @@
+:host {
+  --cocina-primary: #667eea;
+  --cocina-verde: #10b981;
+  --cocina-cafe: #92512c;
+}
+
+/* ===== VISTA COCINA ===== */
+.cocina-view {
+  background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%);
+}
+
+.cocina-title {
+  color: #0f172a;
+  font-weight: 800;
+  font-size: 32px;
+  margin-bottom: 24px;
+  letter-spacing: -0.5px;
+}
+
+/* ===== LISTA DE PEDIDOS ===== */
+.cocina-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 20px;
+  padding: 16px;
+  background: transparent;
+}
+
+.cocina-empty {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  font-size: 18px;
+  color: #64748b;
+  font-weight: 500;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+/* ===== TARJETA DE PEDIDO ===== */
+.cocina-card {
+  background: white;
+  border-radius: 14px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  border-top: 4px solid var(--cocina-primary);
+}
+
+.cocina-card:hover {
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+  transform: translateY(-4px);
+}
+
+/* ===== TOP DE TARJETA ===== */
+.cocina-card-top {
+  padding: 18px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f0f4ff 100%);
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.cocina-card-top-left {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cocina-order-id {
+  font-size: 18px;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.3px;
+}
+
+.cocina-meta {
+  font-size: 13px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+/* ===== BOTONES ===== */
+.cocina-btn-prep,
+.cocina-btn-big {
+  padding: 12px 20px;
+  border: none;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.cocina-btn-prep::before,
+.cocina-btn-big::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+  pointer-events: none;
+}
+
+.cocina-btn-prep:hover::before,
+.cocina-btn-big:hover::before {
+  width: 300px;
+  height: 300px;
+}
+
+.cocina-btn-prep:hover,
+.cocina-btn-big:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+}
+
+.cocina-btn-prep:active,
+.cocina-btn-big:active {
+  transform: translateY(-1px);
+}
+
+/* ===== COLORES DE BOTONES ===== */
+.cocina-btn-cafe {
+  background: linear-gradient(135deg, #92512c 0%, #7d4620 100%);
+  color: white;
+}
+
+.cocina-btn-cafe:hover {
+  box-shadow: 0 8px 25px rgba(146, 81, 44, 0.4);
+}
+
+.cocina-btn-verde {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  min-width: 120px;
+}
+
+.cocina-btn-verde:hover {
+  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+}
+
+/* ===== BODY - ITEMS ===== */
+.cocina-card-body {
+  padding: 18px;
+  background: white;
+}
+
+.cocina-items {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cocina-items-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cocina-items-title::before {
+  content: '●';
+  color: var(--cocina-primary);
+}
+
+.cocina-items-list {
+  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+  border-radius: 10px;
+  padding: 14px;
+  border: 1px solid #e5e7eb;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.cocina-items-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.cocina-items-list::-webkit-scrollbar-track {
+  background: #f0f1f3;
+  border-radius: 10px;
+}
+
+.cocina-items-list::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+}
+
+.cocina-items-list::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.cocina-items-empty {
+  color: #f59e0b;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 12px;
+  background: #fffbeb;
+  border-radius: 8px;
+  border-left: 3px solid #f59e0b;
+}
+
+.cocina-item-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 10px;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 13px;
+  transition: background 0.2s ease;
+}
+
+.cocina-item-row:hover {
+  background: rgba(102, 126, 234, 0.05);
+  border-radius: 6px;
+}
+
+.cocina-item-row:last-child {
+  border-bottom: none;
+}
+
+.cocina-item-left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.cocina-item-left > span:first-child {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.cocina-item-left > span:last-child {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.cocina-item-note {
+  color: #7c3aed;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 10px;
+  background: #f3e8ff;
+  border-radius: 6px;
+  margin-top: 4px;
+}
+
+/* ===== FOOTER ===== */
+.cocina-card-footer {
+  padding: 14px 18px;
+  background: linear-gradient(135deg, #f0f4ff 0%, #f8fafc 100%);
+  border-top: 2px solid #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.cocina-status {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cocina-status::before {
+  content: '⚡';
+  font-size: 14px;
+}
+
+.cocina-total {
+  font-size: 15px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .cocina-list {
+    grid-template-columns: 1fr;
+  }
+
+  .cocina-card {
+    border-top-width: 3px;
+  }
+
+  .cocina-btn-prep,
+  .cocina-btn-big {
+    padding: 10px 16px;
+    font-size: 12px;
+  }
+
+  .cocina-title {
+    font-size: 24px;
+  }
+}
+
+@media (max-width: 480px) {
+  .cocina-view {
+    padding: 12px;
+  }
+
+  .cocina-card-top,
+  .cocina-card-body,
+  .cocina-card-footer {
+    padding: 14px;
+  }
+
+  .cocina-order-id {
+    font-size: 16px;
+  }
+
+  .cocina-btn-prep,
+  .cocina-btn-big {
+    padding: 8px 12px;
+    font-size: 11px;
+    min-width: 100px;
+  }
+
+  .cocina-items-list {
+    max-height: 200px;
+  }
+}

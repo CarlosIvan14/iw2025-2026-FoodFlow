@@ -1,6 +1,7 @@
 package pos.ui.views;
 
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Span;
@@ -23,6 +24,7 @@ import java.util.Collection;
 @PageTitle("Cocina")
 @Route(value = "cocina", layout = MainLayout.class)
 @pos.auth.RequiredRoles(pos.domain.Role.COCINERO)
+@CssImport("./styles/cocina.css")
 public class CocinaView extends VerticalLayout implements RouteGuard {
 
   private final Div list = new Div();
@@ -56,7 +58,10 @@ public class CocinaView extends VerticalLayout implements RouteGuard {
     }
 
     for (Order o : queue) {
-      list.add(orderRow(o, orders));
+      // Mostrar solo PENDING e IN_PREPARATION en cocina
+      if (o.getStatus() == OrderStatus.PENDING || o.getStatus() == OrderStatus.IN_PREPARATION) {
+        list.add(orderRow(o, orders));
+      }
     }
   }
 
@@ -64,7 +69,7 @@ public class CocinaView extends VerticalLayout implements RouteGuard {
     var card = new Div();
     card.addClassName("cocina-card");
 
-    // TOP: título + botón
+    // TOP: título + botones
     var leftTop = new Div();
     leftTop.addClassName("cocina-card-top-left");
 
@@ -76,23 +81,49 @@ public class CocinaView extends VerticalLayout implements RouteGuard {
 
     leftTop.add(id, meta);
 
-    var btn = new Button("LISTO");
-    btn.addClassName("cocina-btn-big");
-    btn.addClickListener(e -> {
-      try {
-        orders.updateStatus(o.getId(), OrderStatus.LISTO);
+    var buttonsContainer = new HorizontalLayout();
+    buttonsContainer.setSpacing(true);
+    buttonsContainer.setAlignItems(Alignment.CENTER);
 
-        Notification.show("Orden enviada a Caja", 2500, Notification.Position.TOP_CENTER)
-            .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+    // Botón "En Preparación" solo si está PENDING
+    if (o.getStatus() == OrderStatus.PENDING) {
+      var btnPrepare = new Button("En Preparación");
+      btnPrepare.addClassName("cocina-btn-prep");
+      btnPrepare.addClassName("cocina-btn-cafe");
+      btnPrepare.addClickListener(e -> {
+        try {
+          orders.updateStatus(o.getId(), OrderStatus.IN_PREPARATION);
+          Notification.show("Orden en preparación", 2500, Notification.Position.TOP_CENTER)
+              .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+          refresh(orders);
+        } catch (Exception ex) {
+          Notification.show("Error: " + ex.getMessage(), 5000, Notification.Position.TOP_CENTER)
+              .addThemeVariants(NotificationVariant.LUMO_ERROR);
+        }
+      });
+      buttonsContainer.add(btnPrepare);
+    }
 
-        refresh(orders);
-      } catch (Exception ex) {
-        Notification.show("Error: " + ex.getMessage(), 5000, Notification.Position.TOP_CENTER)
-            .addThemeVariants(NotificationVariant.LUMO_ERROR);
-      }
-    });
+    // Botón "Listo" si está EN_PREPARATION
+    if (o.getStatus() == OrderStatus.IN_PREPARATION) {
+      var btnListo = new Button("LISTO");
+      btnListo.addClassName("cocina-btn-big");
+      btnListo.addClassName("cocina-btn-verde");
+      btnListo.addClickListener(e -> {
+        try {
+          orders.updateStatus(o.getId(), OrderStatus.LISTO);
+          Notification.show("Orden enviada a Caja", 2500, Notification.Position.TOP_CENTER)
+              .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+          refresh(orders);
+        } catch (Exception ex) {
+          Notification.show("Error: " + ex.getMessage(), 5000, Notification.Position.TOP_CENTER)
+              .addThemeVariants(NotificationVariant.LUMO_ERROR);
+        }
+      });
+      buttonsContainer.add(btnListo);
+    }
 
-    var top = new HorizontalLayout(leftTop, btn);
+    var top = new HorizontalLayout(leftTop, buttonsContainer);
     top.addClassName("cocina-card-top");
     top.setWidthFull();
     top.setAlignItems(Alignment.CENTER);

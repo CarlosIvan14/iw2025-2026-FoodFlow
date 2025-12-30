@@ -155,6 +155,18 @@ public class MenuView extends VerticalLayout implements RouteGuard {
     );
     grid.setHeight("100%");
 
+    // Columna de Imagen del Producto
+    grid.addComponentColumn(product -> {
+      var img = new com.vaadin.flow.component.html.Image(
+              product.getImageUrl() != null ? product.getImageUrl() : "images/placeholder-food.png",
+              product.getName()
+      );
+      img.setWidth("80px");
+      img.setHeight("80px");
+      img.getStyle().set("object-fit", "cover").set("border-radius", "8px");
+      return img;
+    }).setHeader("Imagen").setAutoWidth(true);
+
     // Columna de Producto con badge de categoría
     grid.addColumn(new ComponentRenderer<>(product -> {
               var layout = new VerticalLayout();

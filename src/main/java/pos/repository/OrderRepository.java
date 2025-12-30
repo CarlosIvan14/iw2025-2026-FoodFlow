@@ -17,7 +17,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
         from Order o
         left join fetch o.items it
         left join fetch it.product p
-        where o.status in (pos.domain.OrderStatus.IN_PREPARATION, pos.domain.OrderStatus.LISTO)
+        where o.status in (pos.domain.OrderStatus.PENDING, pos.domain.OrderStatus.IN_PREPARATION, pos.domain.OrderStatus.LISTO)
         order by o.createdAt asc
     """)
     List<Order> findKitchenQueue();

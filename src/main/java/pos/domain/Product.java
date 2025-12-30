@@ -47,6 +47,10 @@ public class Product {
     @Builder.Default
     private Integer stock = 0;
 
+    // Campo para almacenar la URL de la imagen (puede ser local o S3)
+    @Column(name = "image_url", length = 500)
+    private String imageUrl;
+
     // 3. O campo que controla se está ativo ou não
     @Column(name = "active", nullable = false)
     @Builder.Default

@@ -43,6 +43,7 @@ public class CrearOrdenView extends VerticalLayout implements RouteGuard {
 
   // Estado UI
   private TableSpot selectedTable = null;
+  private Long editingOrderId = null;
 
   // UI refs para refrescar
   private final Div tableCanvas = new Div();
@@ -50,6 +51,7 @@ public class CrearOrdenView extends VerticalLayout implements RouteGuard {
   private final Div cartList = new Div();
   private final Span cartTotal = new Span("€ 0.00");
   private final Span selectedTableLabel = new Span("Sin mesa seleccionada");
+  private final H2 pageTitle = new H2("Crear Pedido");
 
   // Para resaltar la mesa seleccionada
   private final Map<Long, Button> tableButtonsById = new HashMap<>();
@@ -60,11 +62,56 @@ public class CrearOrdenView extends VerticalLayout implements RouteGuard {
     setPadding(true);
     setSpacing(true);
 
-    // Recuperar carrito desde sesión si existe (flujo cliente desde MenuView)
-    var sessionCart = (List<OrderItem>) VaadinSession.getCurrent().getAttribute("clientCart");
-    if (sessionCart != null && !sessionCart.isEmpty()) {
-      items.addAll(sessionCart);
-      VaadinSession.getCurrent().setAttribute("clientCart", null);
+    // Verificar si viene en modo edición
+    var session = VaadinSession.getCurrent();
+    var sessionEditingOrderId = session.getAttribute("editingOrderId");
+    var sessionEditingTableId = session.getAttribute("editingTableId");
+    
+    boolean isEditingMode = sessionEditingOrderId != null && sessionEditingTableId != null;
+    
+    if (isEditingMode) {
+      editingOrderId = ((Number) sessionEditingOrderId).longValue();
+      Long tableId = ((Number) sessionEditingTableId).longValue();
+      
+      try {
+        // Cargar el pedido con items
+        Order existingOrder = orders.getOrderWithItemsInitialized(editingOrderId);
+        
+        // Cargar la mesa
+        TableSpot table = tables.all().stream()
+            .filter(t -> Objects.equals(t.getId(), tableId))
+            .findFirst()
+            .orElse(null);
+        
+        if (table != null) {
+          selectedTable = table;
+        }
+        
+        // Cargar items del pedido
+        var orderItems = tryGetItems(existingOrder);
+        if (orderItems != null) {
+          items.addAll((java.util.Collection<? extends OrderItem>) orderItems);
+        }
+        
+        pageTitle.setText("Editar Pedido - Mesa " + (table != null ? table.getCode() : "?"));
+        
+      } catch (Exception e) {
+        Notification.show("Error al cargar pedido: " + e.getMessage(), 3000, Notification.Position.TOP_CENTER)
+            .addThemeVariants(NotificationVariant.LUMO_ERROR);
+        e.printStackTrace();
+      }
+      
+      // Limpiar la sesión
+      session.setAttribute("editingOrderId", null);
+      session.setAttribute("editingTableId", null);
+    } else {
+      // Modo crear nuevo pedido
+      // Recuperar carrito desde sesión si existe (flujo cliente desde MenuView)
+      var sessionCart = (List<OrderItem>) session.getAttribute("clientCart");
+      if (sessionCart != null && !sessionCart.isEmpty()) {
+        items.addAll(sessionCart);
+        session.setAttribute("clientCart", null);
+      }
     }
 
     // Header
@@ -107,13 +154,12 @@ public class CrearOrdenView extends VerticalLayout implements RouteGuard {
      HEADER
      ========================= */
   private Component buildHeader() {
-    var title = new H2("Crear Pedido");
-    title.addClassName("ue-title");
+    pageTitle.addClassName("ue-title");
 
     var hint = new Span("Selecciona una mesa y agrega productos al carrito.");
     hint.addClassName("ue-subtitle");
 
-    var wrap = new Div(title, hint);
+    var wrap = new Div(pageTitle, hint);
     wrap.addClassName("ue-header");
     return wrap;
   }
@@ -182,6 +228,23 @@ public class CrearOrdenView extends VerticalLayout implements RouteGuard {
 
     btn.addClassName(statusClass);
 
+    // Verificar si la mesa tiene pedidos activos (no PAGADO)
+    List<Order> activeOrders = orders.findActiveOrdersByTable(t.getId());
+    boolean hasActiveOrders = !activeOrders.isEmpty();
+    
+    // Si estamos en modo edición, deshabilitar todas las mesas excepto la seleccionada
+    if (editingOrderId != null) {
+      if (selectedTable == null || !Objects.equals(selectedTable.getId(), t.getId())) {
+        btn.setEnabled(false);
+        btn.addClassName("mesa-bloqueada");
+        btn.getElement().setAttribute("title", "No puedes cambiar de mesa en modo edición");
+      }
+    } else if (hasActiveOrders) {
+      btn.setEnabled(false);
+      btn.addClassName("mesa-bloqueada");
+      btn.getElement().setAttribute("title", "Mesa con pedido activo: no disponible");
+    }
+
     btn.getElement().setProperty("innerHTML",
         "<img src='icons/mesa.png' class='mesa-icon'>" +
             "<span class='mesa-label'>" + t.getCode() + "</span>" +
@@ -189,6 +252,9 @@ public class CrearOrdenView extends VerticalLayout implements RouteGuard {
     );
 
     btn.addClickListener(e -> {
+      // si está deshabilitado, no hacemos nada
+      if (!btn.isEnabled()) return;
+
       // desmarcar anterior
       if (selectedTable != null && tableButtonsById.containsKey(selectedTable.getId())) {
         tableButtonsById.get(selectedTable.getId()).removeClassName("mesa-selected");
@@ -427,7 +493,10 @@ public class CrearOrdenView extends VerticalLayout implements RouteGuard {
     totals.add(totalRow);
 
     // Botones
-    var btnCreate = new Button("Confirmar Pedido", new Icon(VaadinIcon.CHECK_CIRCLE));
+    var btnCreate = new Button(
+        editingOrderId != null ? "Guardar Cambios" : "Confirmar Pedido",
+        new Icon(VaadinIcon.CHECK_CIRCLE)
+    );
     btnCreate.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SUCCESS);
     btnCreate.setWidthFull();
 
@@ -454,13 +523,26 @@ public class CrearOrdenView extends VerticalLayout implements RouteGuard {
       }
 
       try {
-        orders.createTableOrder(selectedTable.getId(), items, auth.currentUserId());
+        if (editingOrderId != null) {
+          // Modo edición: agregar items al pedido existente
+          // Aquí deberías crear un método en OrderService para agregar items a un pedido existente
+          orders.addItemsToOrder(editingOrderId, items);
+          
+          Notification.show("Items agregados al pedido", 3000, Notification.Position.TOP_CENTER)
+              .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+          
+          // Navegar de vuelta a mesas
+          com.vaadin.flow.component.UI.getCurrent().navigate("mesas");
+        } else {
+          // Modo crear: crear nuevo pedido
+          orders.createTableOrder(selectedTable.getId(), items, auth.currentUserId());
 
-        Notification.show("Pedido creado para " + selectedTable.getCode(), 3000, Notification.Position.TOP_CENTER)
-            .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+          Notification.show("Pedido creado para " + selectedTable.getCode(), 3000, Notification.Position.TOP_CENTER)
+              .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
 
-        items.clear();
-        refreshCart();
+          items.clear();
+          refreshCart();
+        }
 
       } catch (Exception ex) {
         Notification.show("Error: " + ex.getMessage(), 5000, Notification.Position.TOP_CENTER)
@@ -573,4 +655,24 @@ public class CrearOrdenView extends VerticalLayout implements RouteGuard {
 
     return "images/placeholder-food.png";
   }
-}
+
+  @SuppressWarnings("unchecked")
+  private java.util.Collection<?> tryGetItems(Order o) {
+    try {
+      var m = o.getClass().getMethod("getItems");
+      return (java.util.Collection<?>) m.invoke(o);
+    } catch (Exception e1) {
+      try {
+        var m = o.getClass().getMethod("getOrderItems");
+        return (java.util.Collection<?>) m.invoke(o);
+      } catch (Exception e2) {
+        try {
+          var m = o.getClass().getMethod("getLines");
+          return (java.util.Collection<?>) m.invoke(o);
+        } catch (Exception e3) {
+          return null;
+          }
+        }
+      }
+    }
+  }

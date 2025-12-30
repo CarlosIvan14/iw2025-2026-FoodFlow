@@ -16,7 +16,6 @@ import java.time.ZoneId;
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 @Transactional
 public class OrderService {
@@ -31,6 +30,26 @@ public class OrderService {
 
     private final PdfService pdfService;
     private final EmailService emailService;
+
+    public OrderService(OrderRepository orderRepository, 
+                       ServiceSessionService serviceSessionService,
+                       UserRepository userRepository, 
+                       ProductRepository productRepository,
+                       InventoryMovementRepository inventoryMovementRepository, 
+                       SaleRepository saleRepository,
+                       PaymentRepository paymentRepository, 
+                       PdfService pdfService, 
+                       EmailService emailService) {
+        this.orderRepository = orderRepository;
+        this.serviceSessionService = serviceSessionService;
+        this.userRepository = userRepository;
+        this.productRepository = productRepository;
+        this.inventoryMovementRepository = inventoryMovementRepository;
+        this.saleRepository = saleRepository;
+        this.paymentRepository = paymentRepository;
+        this.pdfService = pdfService;
+        this.emailService = emailService;
+    }
 
     public Order createCustomerOrder(Boolean delivery, String address, String phone, List<OrderItem> items, Long userId) {
         User user = userRepository.findById(userId)
@@ -98,7 +117,7 @@ public class OrderService {
         Order order = Order.builder()
                 .customer(user)
                 .serviceSession(session)
-                .status(OrderStatus.IN_PREPARATION)
+                .status(OrderStatus.PENDING)
                 .total(total)
                 .build();
 
@@ -240,4 +259,91 @@ public class OrderService {
     List<OrderStatus> finishedStatuses = List.of(OrderStatus.PAGADO, OrderStatus.CANCELED);
     return orderRepository.findActiveByTableSpotIdAndStatusNotIn(tableId, finishedStatuses);
     }
-}
+
+    /**
+     * Carga un pedido con los items inicializados (evita LazyInitializationException)
+     */
+    @Transactional(readOnly = true)
+    public Order getOrderWithItemsInitialized(Long orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new EntityNotFoundException("Order not found id=" + orderId));
+        
+        // Fuerza la inicialización de items dentro de la transacción
+        if (order.getItems() != null) {
+            order.getItems().forEach(item -> {
+                // Acceder a propiedades para forzar carga
+                item.getId();
+                item.getProductName();
+                item.getQuantity();
+                item.getUnitPrice();
+            });
+        }
+        
+        return order;
+    }
+
+    /**
+     * Agrega items a un pedido existente
+     */
+    @Transactional
+    public void addItemsToOrder(Long orderId, List<OrderItem> newItems) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new EntityNotFoundException("Order not found id=" + orderId));
+
+        BigDecimal addedTotal = BigDecimal.ZERO;
+
+        // Procesar cada item nuevo
+        for (OrderItem newItem : newItems) {
+            Long prodId = newItem.getProduct().getId();
+
+            Product dbProduct = productRepository.findById(prodId)
+                    .orElseThrow(() -> new EntityNotFoundException("Producto no encontrado ID: " + prodId));
+
+            int quantityToAdd = newItem.getQuantity();
+
+            // Verificar stock
+            if (dbProduct.getStock() < quantityToAdd) {
+                throw new RuntimeException("Estoque insuficiente para: " + dbProduct.getName()
+                        + ". Disponível: " + dbProduct.getStock() + ", Solicitado: " + quantityToAdd);
+            }
+
+            // Decrementar stock
+            dbProduct.setStock(dbProduct.getStock() - quantityToAdd);
+            productRepository.save(dbProduct);
+
+            // Registrar movimiento de inventario
+            InventoryMovement movement = InventoryMovement.builder()
+                    .product(dbProduct)
+                    .quantity(quantityToAdd)
+                    .movementType(MovementType.EXIT)
+                    .note("Item adicional a Pedido #" + orderId)
+                    .build();
+            inventoryMovementRepository.save(movement);
+
+            // Crear el item con el producto actualizado
+            OrderItem item = OrderItem.builder()
+                    .order(order)
+                    .product(dbProduct)
+                    .productName(dbProduct.getName())
+                    .unitPrice(dbProduct.getPrice())
+                    .quantity(quantityToAdd)
+                    .comment(newItem.getComment())
+                    .build();
+
+            order.getItems().add(item);
+
+            // Acumular al total
+            BigDecimal itemTotal = dbProduct.getPrice()
+                    .multiply(BigDecimal.valueOf(quantityToAdd));
+            addedTotal = addedTotal.add(itemTotal);
+        }
+
+        // Actualizar total del pedido
+        BigDecimal currentTotal = order.getTotal() != null ? order.getTotal() : BigDecimal.ZERO;
+        order.setTotal(currentTotal.add(addedTotal));
+
+        orderRepository.save(order);
+
+            log.info("Items agregados al pedido #{}. Total nuevo: {}", orderId, order.getTotal());
+        }
+    }

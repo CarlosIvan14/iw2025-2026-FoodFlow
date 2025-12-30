@@ -1,0 +1,239 @@
+/* ===== DIÁLOGO DE PEDIDOS ===== */
+.pedidos-dialog::part(overlay) {
+  background: rgba(0, 0, 0, 0.40);
+  backdrop-filter: blur(6px);
+}
+
+/* ✅ Recorta bien el contenido para que NO se vean “esquinas negras” */
+.pedidos-dialog::part(content) {
+  padding: 0 !important;
+  overflow: hidden !important;
+  border-radius: 12px;                 /* 👈 menos radio = menos “negro” visible */
+  background: #fff;                    /* 👈 clave */
+  box-shadow: 0 18px 60px rgba(0,0,0,.22);
+
+  /* 👇 súper importante: fuerza recorte del shadow/overlay */
+  clip-path: inset(0 round 12px);
+}
+
+.pedidos-dialog::part(header) {
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+  background: #fff;
+}
+
+.pedidos-dialog::part(footer) {
+  display: none;
+}
+
+/* Botón X del header */
+.pedidos-dialog-close {
+  margin-left: auto;
+  border-radius: 999px;
+}
+
+/* Contenido */
+.pedidos-dialog-content {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  max-height: 65vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  background: #fff;
+}
+
+/* Oculta scrollbar feo */
+.pedidos-dialog-content::-webkit-scrollbar { width: 0; height: 0; }
+.pedidos-dialog-content { scrollbar-width: none; }
+
+.pedidos-empty {
+  display: grid;
+  place-items: center;
+  padding: 48px 18px;
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.04);
+  color: #0f172a;
+  font-weight: 700;
+  min-height: 220px;
+}
+
+/* ===== CARDS ===== */
+.pedido-card {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  background: #ffffff;
+  border-radius: 14px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  padding: 16px;
+  box-shadow: 0 6px 22px rgba(15, 23, 42, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pedido-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.10);
+}
+
+.pedido-card-header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+.pedido-card-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.pedido-card-info {
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 600;
+}
+
+/* ===== ACCIONES ===== */
+.pedido-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  width: 100%;
+}
+
+/* ✅ Aquí está el fix real: forzamos altura del vaadin-button host */
+.pedido-action-btn {
+  box-sizing: border-box;
+  border: none !important;
+  box-shadow: none !important;
+
+  border-radius: 12px;
+  padding: 0 12px !important;     /* 👈 sin padding vertical */
+  height: 36px !important;        /* 👈 BAJA “Ver más” */
+  min-height: 36px !important;    /* 👈 mata el min-height interno de Vaadin */
+  line-height: 36px !important;
+
+  font-weight: 800;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  cursor: pointer;
+}
+
+/* icon tamaño */
+.pedido-action-btn vaadin-icon {
+  width: 16px;
+  height: 16px;
+}
+
+/* ✅ Ver más (AZUL) */
+.pedido-btn-view {
+  background: rgba(37, 99, 235, 0.10);
+  color: #1d4ed8;
+}
+.pedido-btn-view:hover {
+  background: rgba(37, 99, 235, 0.16);
+}
+
+/* ✅ Editar (VERDE, icon-only) */
+.pedido-btn-add {
+  background: rgba(22, 163, 74, 0.12);
+  color: #16a34a;
+}
+.pedido-btn-add:hover {
+  background: rgba(22, 163, 74, 0.18);
+}
+
+/* icon-only botón */
+.pedido-btn-icon {
+  width: 40px !important;
+  height: 36px !important;        /* 👈 igual altura que “Ver más” */
+  min-width: 40px !important;
+  padding: 0 !important;
+  border-radius: 12px;
+}
+
+/* Cancelar (ROJO) */
+.pedido-btn-cancel {
+  background: rgba(239, 68, 68, 0.10);
+  color: #ef4444;
+}
+.pedido-btn-cancel:hover {
+  background: rgba(239, 68, 68, 0.16);
+}
+
+/* Pagado (rosa) */
+.pedido-btn-paid {
+  background: rgba(236, 72, 153, 0.10);
+  color: #db2777;
+}
+.pedido-btn-paid:hover {
+  background: rgba(236, 72, 153, 0.16);
+}
+
+/* ===== DETALLES ===== */
+.pedido-detail-close-btn {
+  margin-top: 16px;
+  width: 100%;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  background: rgba(15, 23, 42, 0.04);
+  cursor: pointer;
+  font-weight: 800;
+  color: #0f172a;
+  text-transform: uppercase;
+  font-size: 12px;
+}
+
+.pedido-info {
+  padding: 14px;
+  background: rgba(37, 99, 235, 0.06);
+  border-radius: 12px;
+  border: 1px solid rgba(37, 99, 235, 0.10);
+}
+
+.pedido-items-list {
+  padding: 14px;
+  background: rgba(15, 23, 42, 0.03);
+  border-radius: 12px;
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  max-height: 360px;
+  overflow-y: auto;
+}
+.pedido-items-list::-webkit-scrollbar { width: 0; height: 0; }
+.pedido-items-list { scrollbar-width: none; }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 480px) {
+  .pedido-action-btn {
+    height: 34px !important;
+    min-height: 34px !important;
+    line-height: 34px !important;
+    font-size: 10px;
+  }
+  .pedido-btn-icon {
+    height: 34px !important;
+    min-width: 38px !important;
+    width: 38px !important;
+  }
+}

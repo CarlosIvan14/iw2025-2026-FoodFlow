@@ -215,20 +215,20 @@ public class AnalyticsAdminView extends VerticalLayout implements RouteGuard, Af
     String[] dateLabels = totalByDay.keySet().stream().map(d -> d.format(dayFmt)).toArray(String[]::new);
     Double[] dateValues = totalByDay.values().toArray(new Double[0]);
 
-    // Chart 2: ventas por producto (top 10)
-    Map<String, Double> totalByProduct = new HashMap<>();
+    // Chart 2: cantidad de productos vendidos (top 10)
+    Map<String, Double> quantityByProduct = new HashMap<>();
 
     for (Order o : base) {
       if (o.getItems() == null) continue;
 
       o.getItems().forEach(it -> {
         String name = it.getProductName() != null ? it.getProductName() : "Producto";
-        double lineTotal = it.getTotal() != null ? it.getTotal().doubleValue() : 0.0;
-        totalByProduct.merge(name, lineTotal, Double::sum);
+        long quantity = it.getQuantity() != null ? it.getQuantity().longValue() : 1L;
+        quantityByProduct.merge(name, (double) quantity, Double::sum);
       });
     }
 
-    List<Map.Entry<String, Double>> topProducts = totalByProduct.entrySet().stream()
+    List<Map.Entry<String, Double>> topProducts = quantityByProduct.entrySet().stream()
         .sorted((a, b) -> Double.compare(b.getValue(), a.getValue()))
         .limit(10)
         .collect(Collectors.toList());
@@ -244,6 +244,7 @@ public class AnalyticsAdminView extends VerticalLayout implements RouteGuard, Af
     String title1 = (selectedProductF == null)
         ? "Ventas por día (Total)"
         : "Ventas por día (" + selectedProductF.getName() + ")";
+    String title2 = "Productos más vendidos (Cantidad)";
 
     // Doble RAF en el cliente: evita que Chart.js calcule tamaño con 0px
     UI.getCurrent().getPage().executeJs("""
@@ -262,6 +263,7 @@ public class AnalyticsAdminView extends VerticalLayout implements RouteGuard, Af
       dateLabelsJson,
       dateValuesJson,
       CANVAS_PRODUCT,
+      title2,
       prodLabelsJson,
       prodValuesJson
     );
