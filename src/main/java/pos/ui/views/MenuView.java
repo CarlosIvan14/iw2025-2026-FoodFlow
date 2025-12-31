@@ -49,6 +49,7 @@ public class MenuView extends VerticalLayout implements RouteGuard {
     setSizeFull();
     setPadding(false);
     setSpacing(false);
+    getStyle().set("overflow", "auto");
 
     add(createHeader(), createContent());
   }
@@ -86,7 +87,7 @@ public class MenuView extends VerticalLayout implements RouteGuard {
   private VerticalLayout createContent() {
     var contentLayout = new VerticalLayout();
     contentLayout.addClassName("menu-content");
-    contentLayout.setSizeFull();
+    contentLayout.setWidthFull();
     contentLayout.setPadding(true);
     contentLayout.setSpacing(true);
 
@@ -153,7 +154,6 @@ public class MenuView extends VerticalLayout implements RouteGuard {
             GridVariant.LUMO_ROW_STRIPES,
             GridVariant.LUMO_WRAP_CELL_CONTENT
     );
-    grid.setHeight("100%");
 
     // Columna de Imagen del Producto
     grid.addComponentColumn(product -> {
