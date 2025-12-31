@@ -110,30 +110,35 @@ public class MenuView extends VerticalLayout implements RouteGuard {
 
     // Campo de búsqueda con ícono
     var searchField = new TextField();
-    searchField.setPlaceholder("Buscar por categoría...");
+    searchField.setPlaceholder("Buscar por nombre o categoría...");
     searchField.setPrefixComponent(new Icon(VaadinIcon.SEARCH));
     searchField.addThemeVariants(TextFieldVariant.LUMO_SMALL);
     searchField.addClassName("search-field");
     searchField.setWidth("300px");
+    searchField.setClearButtonVisible(true);
 
-    // Botón de filtrar
-    var filterBtn = new Button("Filtrar");
-    filterBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-    filterBtn.setIcon(new Icon(VaadinIcon.FILTER));
-    filterBtn.addClassName("filter-btn");
-
-    // Botón de limpiar
+    // Botón de limpiar (redundante pero mantiene UI)
     var clearBtn = new Button("Limpiar");
     clearBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
     clearBtn.setIcon(new Icon(VaadinIcon.CLOSE_SMALL));
     clearBtn.addClassName("clear-btn");
 
-    filterBtn.addClickListener(e -> {
-      String category = searchField.getValue();
-      if (category == null || category.isBlank()) {
+    // Buscar mientras se escribe - tanto por nombre como por categoría
+    searchField.addValueChangeListener(e -> {
+      String q = e.getValue() == null ? "" : e.getValue().trim().toLowerCase();
+      
+      if (q.isBlank()) {
         grid.setItems(menuService.list());
       } else {
-        grid.setItems(menuService.byCategory(category));
+        List<Product> all = menuService.list();
+        List<Product> filtered = all.stream()
+            .filter(p -> {
+              String name = p.getName() != null ? p.getName().toLowerCase() : "";
+              String category = p.getCategory() != null ? p.getCategory().toLowerCase() : "";
+              return name.contains(q) || category.contains(q);
+            })
+            .collect(java.util.stream.Collectors.toList());
+        grid.setItems(filtered);
       }
     });
 
@@ -142,7 +147,7 @@ public class MenuView extends VerticalLayout implements RouteGuard {
       grid.setItems(menuService.list());
     });
 
-    filterLayout.add(searchField, filterBtn, clearBtn);
+    filterLayout.add(searchField, clearBtn);
     return filterLayout;
   }
 
