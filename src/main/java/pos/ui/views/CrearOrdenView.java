@@ -55,6 +55,7 @@ public class CrearOrdenView extends VerticalLayout implements RouteGuard {
 
   // Para resaltar la mesa seleccionada
   private final Map<Long, Button> tableButtonsById = new HashMap<>();
+  private Button btnCreate; // Referencia al botón de confirmar
 
   public CrearOrdenView(TableService tables, MenuService menu, OrderService orders, AuthService auth) {
     addClassName("ue-order-view");
@@ -275,9 +276,15 @@ public class CrearOrdenView extends VerticalLayout implements RouteGuard {
     if (selectedTable == null) {
       selectedTableLabel.setText("Sin mesa seleccionada");
       selectedTableLabel.getElement().getThemeList().remove("badge");
+      if (btnCreate != null) {
+        btnCreate.setEnabled(false); // Deshabilitar botón si no hay mesa
+      }
     } else {
       selectedTableLabel.setText("Asignando a: " + selectedTable.getCode());
       selectedTableLabel.getElement().getThemeList().add("badge");
+      if (btnCreate != null && !items.isEmpty()) {
+        btnCreate.setEnabled(true); // Habilitar si hay mesa y hay items
+      }
     }
   }
 
@@ -384,6 +391,8 @@ public class CrearOrdenView extends VerticalLayout implements RouteGuard {
     var wrap = new VerticalLayout(top, search, scroller);
     wrap.setPadding(false);
     wrap.setSpacing(true);
+    wrap.setHeightFull();
+    wrap.setFlexGrow(1, scroller);
     wrap.addClassName("ue-products-wrap");
 
     section.add(wrap);
@@ -493,12 +502,13 @@ public class CrearOrdenView extends VerticalLayout implements RouteGuard {
     totals.add(totalRow);
 
     // Botones
-    var btnCreate = new Button(
+    btnCreate = new Button(
         editingOrderId != null ? "Guardar Cambios" : "Confirmar Pedido",
         new Icon(VaadinIcon.CHECK_CIRCLE)
     );
     btnCreate.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SUCCESS);
     btnCreate.setWidthFull();
+    btnCreate.setEnabled(false); // Deshabilitado por defecto hasta seleccionar mesa
 
     var btnCancel = new Button("Cancelar", new Icon(VaadinIcon.CLOSE_CIRCLE));
     btnCancel.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_ERROR);
@@ -570,6 +580,9 @@ public class CrearOrdenView extends VerticalLayout implements RouteGuard {
       empty.addClassName("ue-cart-empty");
       cartList.add(empty);
       cartTotal.setText("€ 0.00");
+      if (btnCreate != null) {
+        btnCreate.setEnabled(false); // Deshabilitar si no hay items
+      }
       return;
     }
 
@@ -585,6 +598,11 @@ public class CrearOrdenView extends VerticalLayout implements RouteGuard {
         .sum();
 
     cartTotal.setText(String.format("€ %.2f", total));
+    
+    // Habilitar botón si hay items Y hay mesa seleccionada
+    if (btnCreate != null && selectedTable != null) {
+      btnCreate.setEnabled(true);
+    }
   }
 
   private Component cartRow(OrderItem item) {
