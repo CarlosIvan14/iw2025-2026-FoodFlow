@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
 
 @PageTitle("Mesas")
 @Route(value = "mesas", layout = MainLayout.class)
-@pos.auth.RequiredRoles(pos.domain.Role.MESERO)
+@pos.auth.RequiredRoles({pos.domain.Role.MESERO, pos.domain.Role.CAJERO, pos.domain.Role.COCINERO})
 @CssImport("./styles/mesas.css")
 public class DashboardMesasView extends VerticalLayout implements RouteGuard {
 
