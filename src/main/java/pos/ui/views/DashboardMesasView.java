@@ -33,8 +33,10 @@ import java.util.stream.Collectors;
 public class DashboardMesasView extends VerticalLayout implements RouteGuard {
 
   private final Div canvas = new Div();
+  private final AuthService authService;
 
   public DashboardMesasView(TableService tables, OrderService orders, AuthService authService) {
+    this.authService = authService;
     addClassName("mesas-view");
     setSizeFull();
     setPadding(true);
@@ -267,9 +269,11 @@ public class DashboardMesasView extends VerticalLayout implements RouteGuard {
 
     // Editar / Agregar más (VERDE, icon-only)
     Button addMoreBtn = null;
-    if (o.getStatus() == OrderStatus.PENDING
-        || o.getStatus() == OrderStatus.IN_PREPARATION
-        || o.getStatus() == OrderStatus.LISTO) {
+    String userRole = authService.currentRole();
+    if ((userRole == null || (!userRole.equals("CAJERO") && !userRole.equals("COCINERO")))
+        && (o.getStatus() == OrderStatus.PENDING
+            || o.getStatus() == OrderStatus.IN_PREPARATION
+            || o.getStatus() == OrderStatus.LISTO)) {
 
       addMoreBtn = new Button(new Icon(VaadinIcon.EDIT));
       addMoreBtn.addClassName("pedido-action-btn");
@@ -305,7 +309,8 @@ public class DashboardMesasView extends VerticalLayout implements RouteGuard {
     }
 
     // Pagado (solo LISTO)
-    if (o.getStatus() == OrderStatus.LISTO) {
+    if (o.getStatus() == OrderStatus.LISTO
+        && (userRole == null || (!userRole.equals("COCINERO")))) {
       var paidBtn = new Button("Pagado", new Icon(VaadinIcon.CREDIT_CARD));
       paidBtn.addClassName("pedido-action-btn");
       paidBtn.addClassName("pedido-btn-paid");
