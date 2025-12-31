@@ -14,6 +14,7 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import pos.auth.RouteGuard;
+import pos.auth.AuthService;
 import pos.domain.Order;
 import pos.domain.OrderStatus;
 import pos.domain.TableSpot;
@@ -33,7 +34,7 @@ public class DashboardMesasView extends VerticalLayout implements RouteGuard {
 
   private final Div canvas = new Div();
 
-  public DashboardMesasView(TableService tables, OrderService orders) {
+  public DashboardMesasView(TableService tables, OrderService orders, AuthService authService) {
     addClassName("mesas-view");
     setSizeFull();
     setPadding(true);
@@ -42,15 +43,25 @@ public class DashboardMesasView extends VerticalLayout implements RouteGuard {
     var title = new H2("Mapa de Mesas");
     title.addClassName("mesas-title");
 
-    var addBtn = new Button("Agregar Mesa");
-    addBtn.addClassName("mesas-add-btn");
-    addBtn.addClickListener(e -> showAddTableDialog(tables));
-
-    var header = new HorizontalLayout(title, addBtn);
+    var header = new HorizontalLayout(title);
     header.addClassName("mesas-header");
     header.setWidthFull();
     header.setAlignItems(Alignment.CENTER);
     header.setJustifyContentMode(JustifyContentMode.BETWEEN);
+
+    // Solo mostrar botón "Agregar Mesa" si el usuario es ADMIN
+    try {
+      String userRole = authService.currentRole();
+      if (userRole != null && userRole.equals(pos.domain.Role.ADMIN.name())) {
+        var addBtn = new Button("Agregar Mesa");
+        addBtn.addClassName("mesas-add-btn");
+        addBtn.addClickListener(e -> showAddTableDialog(tables));
+        header.add(addBtn);
+      }
+    } catch (Exception e) {
+      // Si hay error al verificar el rol, no mostrar el botón
+      System.err.println("Error checking admin role: " + e.getMessage());
+    }
 
     canvas.addClassName("mesas-canvas");
     canvas.addClassName("mesas-grid");
