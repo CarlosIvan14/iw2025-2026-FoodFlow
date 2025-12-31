@@ -56,6 +56,33 @@ public class AuthService {
       return us != null ? us.userId() : null;
   }
 
+  /**
+   * Sincroniza la sesión actual con los datos de la BD.
+   * Verifica si el rol ha cambiado y actualiza la sesión si es necesario.
+   * Útil para reflejar cambios en tiempo real (ej: cambio de rol en admin panel).
+   */
+  public void syncSessionWithDatabase() {
+    try {
+      Long userId = currentUserId();
+      if (userId == null) return; // Sin sesión activa
+
+      var userInDb = userRepository.findById(userId).orElse(null);
+      if (userInDb == null) return; // Usuario no encontrado
+
+      String currentRole = currentRole();
+      String dbRole = userInDb.getRole().name();
+
+      // Si el rol cambió, actualizar la sesión
+      if (!dbRole.equals(currentRole)) {
+        login(userId, currentUser(), dbRole);
+        // Notificar para que se refresque el drawer/menú
+        try { Broadcaster.broadcast(); } catch (Exception ignored) {}
+      }
+    } catch (Exception e) {
+      System.err.println("Error sincronizando sesión: " + e.getMessage());
+    }
+  }
+
   public static class AuthException extends Exception {
       public AuthException(String message) {
           super(message);

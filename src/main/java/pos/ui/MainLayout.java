@@ -35,6 +35,8 @@ public class MainLayout extends AppLayout {
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         super.onAttach(attachEvent);
+        // Sincronizar sesión con BD antes de rebuilding drawer
+        authService.syncSessionWithDatabase();
         // Rebuild drawer when component is attached to reflect current session/role
         createDrawer();
         // Register to broadcaster so login/logout can request refresh
