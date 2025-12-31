@@ -225,10 +225,17 @@ public class MenuView extends VerticalLayout implements RouteGuard {
             .setTextAlign(com.vaadin.flow.component.grid.ColumnTextAlign.END);
 
     grid.setItems(menuService.list());
-    // Añadir columna con botón para añadir al carrito
+    // Añadir columna con botón para añadir al carrito (solo visible para roles permitidos)
     grid.addColumn(new ComponentRenderer<>(product -> {
       var addBtn = new Button("Añadir");
       addBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+      
+      // Ocultar botón para CAJERO y COCINA
+      String userRole = authService.currentRole();
+      if (userRole != null && (userRole.equals("CAJERO") || userRole.equals("COCINA"))) {
+        return new Div(); // Retornar div vacío si el rol no tiene permiso
+      }
+      
       addBtn.addClickListener(evt -> {
         OrderItem item = OrderItem.builder()
             .product(product)
@@ -254,6 +261,12 @@ public class MenuView extends VerticalLayout implements RouteGuard {
     actionLayout.setWidthFull();
     actionLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.END);
     actionLayout.setPadding(true);
+
+    // Ocultar botón para CAJERO y COCINA
+    String userRole = authService.currentRole();
+    if (userRole != null && (userRole.equals("CAJERO") || userRole.equals("COCINA"))) {
+      return actionLayout; // Retornar layout vacío si el rol no tiene permiso
+    }
 
     var orderBtn = new Button("Realizar Pedido");
     orderBtn.addThemeVariants(
