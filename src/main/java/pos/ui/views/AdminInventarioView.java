@@ -138,7 +138,9 @@ public class AdminInventarioView extends VerticalLayout implements RouteGuard {
     upload.setMaxFileSize(5 * 1024 * 1024); // 5MB máximo
     upload.setDropLabel(new com.vaadin.flow.component.html.Span("Arrastra una imagen aquí o haz clic para seleccionar"));
     
+    // Tracer de si se subió una NUEVA imagen (diferente de la anterior)
     final String[] uploadedImageUrl = {null};
+    final boolean[] newImageUploaded = {false};
     
     upload.addSucceededListener(event -> {
       try {
@@ -170,6 +172,7 @@ public class AdminInventarioView extends VerticalLayout implements RouteGuard {
         
         String imageUrl = s3ImageUploadService.uploadImage(mf);
         uploadedImageUrl[0] = imageUrl;
+        newImageUploaded[0] = true;
         imagePreview.setSrc(imageUrl);
         Notification.show("✓ Imagen subida a S3 correctamente", 2000, Notification.Position.BOTTOM_START)
             .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
@@ -207,21 +210,36 @@ public class AdminInventarioView extends VerticalLayout implements RouteGuard {
         return;
       }
 
+      // Determinar la URL final de imagen
+      String finalImageUrl = null;
+      if (newImageUploaded[0] && uploadedImageUrl[0] != null) {
+        // Se subió una nueva imagen
+        finalImageUrl = uploadedImageUrl[0];
+      } else if (isEditMode) {
+        // En edición, mantener la imagen anterior si no se subió nueva
+        finalImageUrl = productToEdit.getImageUrl();
+      }
+      // Si es creación y no se subió imagen, finalImageUrl queda null
+
       // Cria o objeto (ou usa o builder para atualizar os dados)
       var p = Product.builder()
               .name(nameField.getValue())
               .price(priceField.getValue())
               .category(categoryField.getValue())
               .stock(stockField.getValue())
-              .imageUrl(uploadedImageUrl[0]) // Guardar URL de la imagen
+              .imageUrl(finalImageUrl)
               .build();
 
       try {
         if (isEditMode) {
-          // Si hay imagen anterior diferente, eliminarla de S3
-          if (productToEdit.getImageUrl() != null && 
+          // Si se subió una nueva imagen y había una anterior diferente, eliminarla de S3
+          if (newImageUploaded[0] && productToEdit.getImageUrl() != null && 
               !productToEdit.getImageUrl().equals(uploadedImageUrl[0])) {
-            s3ImageUploadService.deleteImage(productToEdit.getImageUrl());
+            try {
+              s3ImageUploadService.deleteImage(productToEdit.getImageUrl());
+            } catch (Exception ex) {
+              System.err.println("Aviso: No se pudo eliminar imagen anterior: " + ex.getMessage());
+            }
           }
           // Se for edição, chamamos o update passando o ID original
           productService.update(productToEdit.getId(), p);
