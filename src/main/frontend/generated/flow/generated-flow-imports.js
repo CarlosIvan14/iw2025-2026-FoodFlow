@@ -1,12 +1,21 @@
 import { injectGlobalCss } from 'Frontend/generated/jar-resources/theme-util.js';
 
 import { css, unsafeCSS, registerStyles } from '@vaadin/vaadin-themable-mixin';
-import $cssFromFile_0 from 'Frontend/styles/cocina.css?inline';
+import $cssFromFile_0 from 'Frontend/styles/cliente-pedidos.css?inline';
 
 injectGlobalCss($cssFromFile_0.toString(), 'CSSImport end', document);
-import $cssFromFile_1 from 'Frontend/styles/mesas.css?inline';
+import $cssFromFile_1 from 'Frontend/styles/cocina.css?inline';
 
 injectGlobalCss($cssFromFile_1.toString(), 'CSSImport end', document);
+import $cssFromFile_2 from 'Frontend/styles/crear-orden.css?inline';
+
+injectGlobalCss($cssFromFile_2.toString(), 'CSSImport end', document);
+import $cssFromFile_3 from 'Frontend/styles/mesas.css?inline';
+
+injectGlobalCss($cssFromFile_3.toString(), 'CSSImport end', document);
+import $cssFromFile_4 from 'Frontend/styles/login.css?inline';
+
+injectGlobalCss($cssFromFile_4.toString(), 'CSSImport end', document);
 import '@vaadin/common-frontend/ConnectionIndicator.js';
 import '@vaadin/polymer-legacy-adapter/style-modules.js';
 import '@vaadin/accordion/theme/lumo/vaadin-accordion.js';
