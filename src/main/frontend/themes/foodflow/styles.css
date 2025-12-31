@@ -967,3 +967,217 @@ vaadin-app-layout nav a.active-link {
   font-weight: 1000;
   font-size: 1.05rem;
 }
+/* =========================================================
+   ✅ FIX LAYOUT CrearOrdenView
+   - No se superponen secciones
+   - Productos con altura máxima + scroll
+   - Mobile: Mesas -> Productos -> Carrito (abajo)
+   Pegar AL FINAL del CSS
+   ========================================================= */
+
+/* 1) Evita overflow horizontal y arregla flex heights */
+.ue-order-view {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* El contenedor principal debe poder repartir alturas */
+.ue-order-content {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+
+  display: flex;
+  gap: var(--gap);
+
+  min-height: 0;     /* ✅ CLAVE para que los scrollers funcionen */
+  flex: 1;
+}
+
+/* Columnas sin desbordar */
+.ue-left,
+.ue-right {
+  min-width: 0;
+  min-height: 0;
+}
+
+/* 2) Desktop/tablet: dos columnas reales, sin “encimar” */
+@media (min-width: 900px) {
+  .ue-order-content {
+    flex-direction: row;
+    align-items: stretch;
+  }
+
+  .ue-left {
+    flex: 1 1 auto;
+  }
+
+  /* IMPORTANTE: quita el height fijo que causa overlay */
+  .ue-right {
+    flex: 0 0 var(--cart-width-desktop);
+    width: var(--cart-width-desktop);
+    max-width: var(--cart-width-desktop);
+
+    height: auto !important;     /* ✅ mata el calc(100vh - 210px) */
+    align-self: stretch;         /* estira con el layout */
+  }
+}
+
+/* 3) Mobile: todo en columna (mesas, productos, carrito) */
+@media (max-width: 899px) {
+  .ue-order-content {
+    flex-direction: column;
+  }
+
+  .ue-right {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+  }
+}
+
+/* 4) Productos: sección con estructura flex y scroller real */
+.ue-products-wrap {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 0; /* ✅ permite que el scroller tome altura */
+}
+
+/* El Scroller de Vaadin debe poder encogerse dentro del flex */
+.ue-products-scroller {
+  width: 100%;
+  min-height: 0;
+  overflow: auto;
+
+  /* Desktop: que no pase el alto visible */
+  max-height: calc(100vh - 520px);
+}
+
+/* Mobile: productos no deben comerse toda la pantalla */
+@media (max-width: 899px) {
+  .ue-products-scroller {
+    max-height: 42vh; /* 👈 ajusta a gusto: 38–50vh */
+  }
+}
+
+/* 5) Mesas: scroller vertical en el wrap para que no empuje el layout */
+.ue-mesas-wrap {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+
+  max-height: 260px;   /* ya lo tenías, lo reafirmo */
+  overflow: auto;
+}
+
+/* 6) Carrito: su lista debe scrollear, no crecer infinito */
+.ue-cart-scroller {
+  width: 100%;
+  min-height: 0;
+  overflow: auto;
+}
+
+/* Desktop: carrito scrollea dentro de su columna */
+@media (min-width: 900px) {
+  .ue-cart-scroller {
+    max-height: 55vh; /* ajusta a gusto */
+  }
+}
+
+/* Mobile: carrito abajo, y si hay mucho, que scrollee sin romper */
+@media (max-width: 899px) {
+  .ue-cart-scroller {
+    max-height: 40vh;
+  }
+}
+
+/* 7) Extra: evita que cualquier cosa empuje el ancho */
+.ue-section,
+.ue-search,
+.ue-products,
+.ue-product-card,
+.ue-cart-row {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+/* =========================================================
+   ✅ COMPACT TOP SPACING (CrearOrdenView + AppLayout)
+   - Sube todo visualmente
+   - Reduce espacio entre hamburguesa y título
+   Pegar AL FINAL del CSS
+   ========================================================= */
+
+/* 1) No centres las vistas globalmente (eso genera "aire" lateral/vertical) */
+[class$="-view"] {
+  align-items: stretch !important;
+}
+
+/* 2) Quita el padding/gap gigante SOLO en la vista de orden */
+.ue-order-view {
+  padding-top: 0.7rem !important;   /* antes 1.2rem (y global 2.2rem) */
+  padding-left: 1.2rem !important;
+  padding-right: 1.2rem !important;
+  padding-bottom: 1.2rem !important;
+
+  gap: 0.9rem !important;           /* antes 1.2rem / 2.2rem */
+}
+
+/* 3) Header más compacto */
+.ue-header {
+  padding: 0.15rem 0 0.35rem 0 !important; /* reduce el "aire" */
+  margin: 0 !important;
+}
+
+.ue-title {
+  margin: 0 !important;
+  line-height: 1.05;
+}
+
+.ue-subtitle {
+  margin-top: 0.15rem !important;
+}
+
+/* 4) Reduce separación entre secciones */
+.ue-order-content {
+  gap: 12px !important;  /* en vez de 16px */
+}
+
+/* 5) AppLayout: reduce alto del navbar/offset superior
+   (Vaadin a veces reserva espacio arriba; esto lo compacta) */
+vaadin-app-layout::part(navbar) {
+  padding-top: 6px !important;
+  padding-bottom: 6px !important;
+  min-height: 44px !important;   /* compacto */
+}
+
+/* 6) Botón hamburguesa: menos margen para que quede más cerca del título */
+vaadin-drawer-toggle {
+  margin: 6px 10px !important;  /* antes se ve muy separado */
+}
+
+/* Si tu botón hamburguesa usa clase floating-toggle */
+.floating-toggle {
+  margin: 8px !important;       /* antes 15px */
+}
+
+/* 7) Mobile: aún más pegado arriba */
+@media (max-width: 480px) {
+  .ue-order-view {
+    padding-top: 0.35rem !important;
+    padding-left: 0.8rem !important;
+    padding-right: 0.8rem !important;
+    gap: 0.75rem !important;
+  }
+
+  vaadin-app-layout::part(navbar) {
+    padding-top: 4px !important;
+    padding-bottom: 4px !important;
+    min-height: 40px !important;
+  }
+
+  vaadin-drawer-toggle {
+    margin: 4px 8px !important;
+  }
+}

@@ -237,3 +237,91 @@
     width: 38px !important;
   }
 }
+/* ================================
+   ✅ MESAS: MAPA RESPONSIVE (NO OVERFLOW)
+   Pegar al FINAL de mesas.css
+   ================================ */
+
+/* Evita scroll horizontal en toda la vista */
+.mesas-view {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+/* Header no debe empujar el ancho */
+.mesas-header {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  flex-wrap: wrap;            /* si no cabe, baja elementos */
+  gap: 12px;
+}
+
+/* Canvas nunca debe exceder el contenedor */
+.mesas-canvas {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box;
+  overflow-x: hidden;         /* ✅ clave */
+}
+
+/* Grid: auto-fit para adaptarse a cualquier ancho */
+.mesas-grid {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box;
+
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 14px;
+  align-content: start;
+}
+
+/* Mesa button: que nunca “empuje” el ancho */
+.mesas-grid .mesa-btn,
+.mesas-grid .mesa-card {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+/* Contenido interno: permite truncar texto y no romper layout */
+.mesa-inner {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
+
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.mesa-texts {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.mesa-label,
+.mesa-badge {
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Mobile más chico: columnas más flexibles */
+@media (max-width: 480px) {
+  .mesas-grid {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+  }
+
+  .mesas-canvas {
+    padding: 12px;
+  }
+}
+
