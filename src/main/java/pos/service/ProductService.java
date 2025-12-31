@@ -80,6 +80,8 @@ public class ProductService {
             p.setDescription(payload.getDescription());
             p.setPrice(payload.getPrice());
             p.setStock(payload.getStock());
+            p.setCategory(payload.getCategory());
+            p.setImageUrl(payload.getImageUrl());
 
             validate(p); // garante price>=0, stock>=0
 
