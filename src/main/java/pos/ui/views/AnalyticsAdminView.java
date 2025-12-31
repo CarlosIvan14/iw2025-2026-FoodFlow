@@ -245,6 +245,7 @@ public class AnalyticsAdminView extends VerticalLayout implements RouteGuard, Af
         ? "Ventas por día (Total)"
         : "Ventas por día (" + selectedProductF.getName() + ")";
     String title2 = "Productos más vendidos (Cantidad)";
+    String selectedProductName = (selectedProductF != null) ? selectedProductF.getName() : null;
 
     // Doble RAF en el cliente: evita que Chart.js calcule tamaño con 0px
     UI.getCurrent().getPage().executeJs("""
@@ -253,7 +254,7 @@ public class AnalyticsAdminView extends VerticalLayout implements RouteGuard, Af
         if (!fn) { console.warn("renderSalesCharts no está cargado aún"); return; }
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
-            fn($0,$1,$2,$3,$4,$5,$6);
+            fn($0,$1,$2,$3,$4,$5,$6,$7,$8);
           });
         });
       })();
@@ -265,7 +266,8 @@ public class AnalyticsAdminView extends VerticalLayout implements RouteGuard, Af
       CANVAS_PRODUCT,
       title2,
       prodLabelsJson,
-      prodValuesJson
+      prodValuesJson,
+      selectedProductName
     );
   }
 
