@@ -13,6 +13,7 @@ import com.vaadin.flow.component.orderedlayout.Scroller;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.IntegerField;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.VaadinSession;
@@ -35,7 +36,8 @@ import java.util.stream.Collectors;
 
 @PageTitle("Crear Orden")
 @Route(value = "ordenes", layout = MainLayout.class)
-@pos.auth.RequiredRoles(pos.domain.Role.MESERO)
+@CssImport("./styles/crear-orden.css")
+@pos.auth.RequiredRoles({pos.domain.Role.MESERO, pos.domain.Role.CLIENTE})
 public class CrearOrdenView extends VerticalLayout implements RouteGuard {
 
   // Carrito en memoria
@@ -44,6 +46,8 @@ public class CrearOrdenView extends VerticalLayout implements RouteGuard {
   // Estado UI
   private TableSpot selectedTable = null;
   private Long editingOrderId = null;
+  private boolean isForCarryOut = false; // Para llevar / Recoger en caja
+  private final AuthService auth;
 
   // UI refs para refrescar
   private final Div tableCanvas = new Div();
@@ -58,10 +62,15 @@ public class CrearOrdenView extends VerticalLayout implements RouteGuard {
   private Button btnCreate; // Referencia al botón de confirmar
 
   public CrearOrdenView(TableService tables, MenuService menu, OrderService orders, AuthService auth) {
+    this.auth = auth;
     addClassName("ue-order-view");
     setSizeFull();
     setPadding(true);
     setSpacing(true);
+
+    // Verificar si es cliente
+    String userRole = auth.currentRole();
+    boolean isClientMode = userRole != null && (userRole.equalsIgnoreCase("CLIENTE") || userRole.equalsIgnoreCase("CLIENT"));
 
     // Verificar si viene en modo edición
     var session = VaadinSession.getCurrent();
@@ -131,10 +140,18 @@ public class CrearOrdenView extends VerticalLayout implements RouteGuard {
     left.setSpacing(true);
     left.setSizeFull();
 
+    // Mostrar mesas siempre (para mesero con info completa, para cliente simplificado)
     var tablesSection = buildTablesSection(tables, orders);
-    var productsSection = buildProductsSection(menu);
+    left.add(tablesSection);
 
-    left.add(tablesSection, productsSection);
+    // Si es cliente, mostrar también opción "Para llevar"
+    if (isClientMode) {
+      var carryOutSection = buildCarryOutSection();
+      left.add(carryOutSection);
+    }
+
+    var productsSection = buildProductsSection(menu);
+    left.add(productsSection);
 
     // Columna derecha: carrito (más angosto por CSS)
     var right = buildCartSection(orders, auth);
@@ -224,33 +241,55 @@ public class CrearOrdenView extends VerticalLayout implements RouteGuard {
     var btn = new Button();
     btn.addClassName("mesa-btn");
 
-    String statusClass = getTableStatusClass(t, orders);
-    String statusBadge = getTableStatusBadge(t, orders);
-
-    btn.addClassName(statusClass);
-
     // Verificar si la mesa tiene pedidos activos (no PAGADO)
     List<Order> activeOrders = orders.findActiveOrdersByTable(t.getId());
     boolean hasActiveOrders = !activeOrders.isEmpty();
     
-    // Si estamos en modo edición, deshabilitar todas las mesas excepto la seleccionada
-    if (editingOrderId != null) {
-      if (selectedTable == null || !Objects.equals(selectedTable.getId(), t.getId())) {
+    // Para clientes, mostrar versión simplificada (solo libre/ocupada)
+    String userRole = auth.currentRole();
+    boolean isClientMode = userRole != null && (userRole.equalsIgnoreCase("CLIENTE") || userRole.equalsIgnoreCase("CLIENT"));
+    
+    if (isClientMode) {
+      // Versión simplificada para cliente
+      String statusClass = hasActiveOrders ? "mesa-ocupada" : "mesa-libre";
+      btn.addClassName(statusClass);
+      
+      if (hasActiveOrders) {
         btn.setEnabled(false);
         btn.addClassName("mesa-bloqueada");
-        btn.getElement().setAttribute("title", "No puedes cambiar de mesa en modo edición");
+        btn.getElement().setAttribute("title", "Mesa ocupada");
       }
-    } else if (hasActiveOrders) {
-      btn.setEnabled(false);
-      btn.addClassName("mesa-bloqueada");
-      btn.getElement().setAttribute("title", "Mesa con pedido activo: no disponible");
+      
+      btn.getElement().setProperty("innerHTML",
+          "<img src='icons/mesa.png' class='mesa-icon'>" +
+              "<span class='mesa-label'>" + t.getCode() + "</span>"
+      );
+    } else {
+      // Versión completa para mesero/admin
+      String statusClass = getTableStatusClass(t, orders);
+      String statusBadge = getTableStatusBadge(t, orders);
+      
+      btn.addClassName(statusClass);
+      
+      // Si estamos en modo edición, deshabilitar todas las mesas excepto la seleccionada
+      if (editingOrderId != null) {
+        if (selectedTable == null || !Objects.equals(selectedTable.getId(), t.getId())) {
+          btn.setEnabled(false);
+          btn.addClassName("mesa-bloqueada");
+          btn.getElement().setAttribute("title", "No puedes cambiar de mesa en modo edición");
+        }
+      } else if (hasActiveOrders) {
+        btn.setEnabled(false);
+        btn.addClassName("mesa-bloqueada");
+        btn.getElement().setAttribute("title", "Mesa con pedido activo: no disponible");
+      }
+      
+      btn.getElement().setProperty("innerHTML",
+          "<img src='icons/mesa.png' class='mesa-icon'>" +
+              "<span class='mesa-label'>" + t.getCode() + "</span>" +
+              statusBadge
+      );
     }
-
-    btn.getElement().setProperty("innerHTML",
-        "<img src='icons/mesa.png' class='mesa-icon'>" +
-            "<span class='mesa-label'>" + t.getCode() + "</span>" +
-            statusBadge
-    );
 
     btn.addClickListener(e -> {
       // si está deshabilitado, no hacemos nada
@@ -273,17 +312,36 @@ public class CrearOrdenView extends VerticalLayout implements RouteGuard {
   }
 
   private void updateSelectedTableLabel() {
-    if (selectedTable == null) {
-      selectedTableLabel.setText("Sin mesa seleccionada");
-      selectedTableLabel.getElement().getThemeList().remove("badge");
-      if (btnCreate != null) {
-        btnCreate.setEnabled(false); // Deshabilitar botón si no hay mesa
+    String userRole = auth.currentRole();
+    boolean isClientMode = userRole != null && (userRole.equalsIgnoreCase("CLIENTE") || userRole.equalsIgnoreCase("CLIENT"));
+    
+    if (isClientMode) {
+      if (isForCarryOut) {
+        selectedTableLabel.setText("Para llevar");
+        selectedTableLabel.getElement().getThemeList().add("badge");
+        if (btnCreate != null && !items.isEmpty()) {
+          btnCreate.setEnabled(true);
+        }
+      } else {
+        selectedTableLabel.setText("Selecciona tipo de pedido");
+        selectedTableLabel.getElement().getThemeList().remove("badge");
+        if (btnCreate != null) {
+          btnCreate.setEnabled(false);
+        }
       }
     } else {
-      selectedTableLabel.setText("Asignando a: " + selectedTable.getCode());
-      selectedTableLabel.getElement().getThemeList().add("badge");
-      if (btnCreate != null && !items.isEmpty()) {
-        btnCreate.setEnabled(true); // Habilitar si hay mesa y hay items
+      if (selectedTable == null) {
+        selectedTableLabel.setText("Sin mesa seleccionada");
+        selectedTableLabel.getElement().getThemeList().remove("badge");
+        if (btnCreate != null) {
+          btnCreate.setEnabled(false); // Deshabilitar botón si no hay mesa
+        }
+      } else {
+        selectedTableLabel.setText("Asignando a: " + selectedTable.getCode());
+        selectedTableLabel.getElement().getThemeList().add("badge");
+        if (btnCreate != null && !items.isEmpty()) {
+          btnCreate.setEnabled(true); // Habilitar si hay mesa y hay items
+        }
       }
     }
   }
@@ -346,6 +404,46 @@ public class CrearOrdenView extends VerticalLayout implements RouteGuard {
 
     if (badgeText.isEmpty()) return "";
     return "<span class='mesa-badge " + badgeClass + "'>" + badgeText + "</span>";
+  }
+
+  /* =========================
+     SECTION: PARA LLEVAR (CLIENTE)
+     ========================= */
+  private Component buildCarryOutSection() {
+    var section = new Div();
+    section.addClassName("ue-section");
+
+    var h = new H3("Tipo de Pedido");
+    h.addClassName("ue-section-title");
+
+    // Botón Para Llevar
+    var carryOutBtn = new Button("🛍️ Para Llevar");
+    carryOutBtn.addClassName("carry-out-btn");
+    carryOutBtn.setWidthFull();
+    carryOutBtn.addThemeVariants(
+        isForCarryOut ? ButtonVariant.LUMO_PRIMARY : ButtonVariant.LUMO_TERTIARY,
+        ButtonVariant.LUMO_SUCCESS
+    );
+
+    carryOutBtn.addClickListener(e -> {
+      isForCarryOut = true;
+      selectedTable = null;
+      updateSelectedTableLabel();
+      carryOutBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+      carryOutBtn.removeThemeVariants(ButtonVariant.LUMO_TERTIARY);
+      Notification.show("Pedido para llevar", 1200, Notification.Position.BOTTOM_START)
+          .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+    });
+
+    var info = new Span("Recogerás tu pedido en caja");
+    info.addClassName("carry-out-info");
+
+    var layout = new VerticalLayout(carryOutBtn, info);
+    layout.setPadding(false);
+    layout.setSpacing(true);
+
+    section.add(h, layout);
+    return section;
   }
 
   /* =========================
@@ -521,11 +619,23 @@ public class CrearOrdenView extends VerticalLayout implements RouteGuard {
     });
 
     btnCreate.addClickListener(e -> {
-      if (selectedTable == null) {
+      // Para cliente: puede seleccionar mesa O "Para llevar"
+      String userRole = auth.currentRole();
+      boolean isClientMode = userRole != null && (userRole.equalsIgnoreCase("CLIENTE") || userRole.equalsIgnoreCase("CLIENT"));
+      
+      if (isClientMode && selectedTable == null && !isForCarryOut) {
+        Notification.show("⚠ Selecciona una mesa o 'Para Llevar'", 2500, Notification.Position.MIDDLE)
+            .addThemeVariants(NotificationVariant.LUMO_ERROR);
+        return;
+      }
+      
+      // Para mesero, necesita mesa seleccionada
+      if (!isClientMode && selectedTable == null) {
         Notification.show("⚠ Selecciona una mesa", 2500, Notification.Position.MIDDLE)
             .addThemeVariants(NotificationVariant.LUMO_ERROR);
         return;
       }
+      
       if (items.isEmpty()) {
         Notification.show("⚠ Agrega productos", 2500, Notification.Position.MIDDLE)
             .addThemeVariants(NotificationVariant.LUMO_ERROR);
@@ -535,7 +645,6 @@ public class CrearOrdenView extends VerticalLayout implements RouteGuard {
       try {
         if (editingOrderId != null) {
           // Modo edición: agregar items al pedido existente
-          // Aquí deberías crear un método en OrderService para agregar items a un pedido existente
           orders.addItemsToOrder(editingOrderId, items);
           
           Notification.show("Items agregados al pedido", 3000, Notification.Position.TOP_CENTER)
@@ -543,11 +652,22 @@ public class CrearOrdenView extends VerticalLayout implements RouteGuard {
           
           // Navegar de vuelta a mesas
           com.vaadin.flow.component.UI.getCurrent().navigate("mesas");
+        } else if (isClientMode && isForCarryOut) {
+          // Cliente: crear pedido sin mesa (para llevar)
+          orders.createCarryOutOrder(items, auth.currentUserId());
+
+          Notification.show("¡Pedido creado! Recógelo en caja", 3000, Notification.Position.TOP_CENTER)
+              .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+
+          items.clear();
+          isForCarryOut = false;
+          refreshCart();
         } else {
-          // Modo crear: crear nuevo pedido
+          // Crear pedido con mesa (mesero o cliente en mesa)
           orders.createTableOrder(selectedTable.getId(), items, auth.currentUserId());
 
-          Notification.show("Pedido creado para " + selectedTable.getCode(), 3000, Notification.Position.TOP_CENTER)
+          String tableCode = selectedTable != null ? selectedTable.getCode() : "mesa";
+          Notification.show("Pedido creado para " + tableCode, 3000, Notification.Position.TOP_CENTER)
               .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
 
           items.clear();
