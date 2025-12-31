@@ -344,6 +344,76 @@ public class OrderService {
 
         orderRepository.save(order);
 
-            log.info("Items agregados al pedido #{}. Total nuevo: {}", orderId, order.getTotal());
+        log.info("Items agregados al pedido #{}. Total nuevo: {}", orderId, order.getTotal());
+    }
+
+    /**
+     * Crear pedido para llevar (sin mesa, para cliente)
+     */
+    public Order createCarryOutOrder(List<OrderItem> items, Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado: " + userId));
+
+        // Cálculo del total
+        BigDecimal total = items.stream()
+                .map(OrderItem::getTotal)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        Order order = Order.builder()
+                .customer(user)
+                .serviceSession(null) // Para llevar, sin sesión de mesa
+                .status(OrderStatus.PENDING)
+                .total(total)
+                .build();
+
+        // --- LÓGICA DE ESTOQUE ---
+        for (OrderItem item : items) {
+            item.setOrder(order);
+
+            Long prodId = item.getProduct().getId();
+
+            Product dbProduct = productRepository.findById(prodId)
+                    .orElseThrow(() -> new EntityNotFoundException("Producto no encontrado ID: " + prodId));
+
+            item.setProduct(dbProduct);
+
+            int quantityToSell = item.getQuantity();
+
+            if (dbProduct.getStock() < quantityToSell) {
+                throw new RuntimeException("Stock insuficiente para: " + dbProduct.getName()
+                        + ". Disponible: " + dbProduct.getStock() + ", Solicitado: " + quantityToSell);
+            }
+
+            dbProduct.setStock(dbProduct.getStock() - quantityToSell);
+            productRepository.save(dbProduct);
+
+            InventoryMovement movement = InventoryMovement.builder()
+                    .product(dbProduct)
+                    .quantity(quantityToSell)
+                    .movementType(MovementType.EXIT)
+                    .note("Venta Para Llevar - Pedido (pendiente de ID)")
+                    .build();
+
+            inventoryMovementRepository.save(movement);
+        }
+
+        Order saved = orderRepository.save(order);
+        log.info("Pedido para llevar creado #{}. Usuario: {}. Total: {}", saved.getId(), user.getEmail(), total);
+
+        return saved;
+    }
+
+    /**
+     * Buscar pedidos de un usuario (cliente)
+     */
+    public List<Order> findOrdersByUserId(String userId) {
+        try {
+            Long id = Long.parseLong(userId);
+            return orderRepository.findAll().stream()
+                    .filter(o -> o.getCustomer() != null && o.getCustomer().getId() != null && o.getCustomer().getId().equals(id))
+                    .toList();
+        } catch (NumberFormatException e) {
+            return List.of();
         }
     }
+}
