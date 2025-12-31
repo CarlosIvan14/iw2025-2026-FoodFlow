@@ -44,3 +44,5 @@ dist/
 *.tmp
 
 secrets.properties
+.env
+.env.local

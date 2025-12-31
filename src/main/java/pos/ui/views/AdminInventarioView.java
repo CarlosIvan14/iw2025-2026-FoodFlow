@@ -19,11 +19,12 @@ import com.vaadin.flow.component.upload.Upload;
 import com.vaadin.flow.component.upload.receivers.MemoryBuffer;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import org.springframework.web.multipart.MultipartFile;
 import pos.auth.RouteGuard;
 import pos.domain.Product;
 import pos.ui.MainLayout;
 import pos.service.ProductService;
-import pos.service.ImageUploadService;
+import pos.service.S3ImageUploadService;
 
 @PageTitle("Productos")
 @Route(value = "admin/productos", layout = MainLayout.class)
@@ -31,12 +32,12 @@ import pos.service.ImageUploadService;
 public class AdminInventarioView extends VerticalLayout implements RouteGuard {
 
   private final ProductService productService;
-  private final ImageUploadService imageUploadService;
+  private final S3ImageUploadService s3ImageUploadService;
   private final Grid<Product> grid;
 
-  public AdminInventarioView(ProductService productService, ImageUploadService imageUploadService) {
+  public AdminInventarioView(ProductService productService, S3ImageUploadService s3ImageUploadService) {
     this.productService = productService;
-    this.imageUploadService = imageUploadService;
+    this.s3ImageUploadService = s3ImageUploadService;
 
     addClassName("inventario-view");
     setSizeFull();
@@ -141,20 +142,46 @@ public class AdminInventarioView extends VerticalLayout implements RouteGuard {
     
     upload.addSucceededListener(event -> {
       try {
-        String imageUrl = imageUploadService.uploadImage(buffer.getInputStream(), 
-                                                          event.getFileName());
+        // Convertir bytes del buffer a MultipartFile
+        byte[] fileBytes = buffer.getInputStream().readAllBytes();
+        
+        MultipartFile mf = new MultipartFile() {
+          @Override
+          public String getName() { return event.getFileName(); }
+          @Override
+          public String getOriginalFilename() { return event.getFileName(); }
+          @Override
+          public String getContentType() { return event.getMIMEType(); }
+          @Override
+          public boolean isEmpty() { return fileBytes.length == 0; }
+          @Override
+          public long getSize() { return fileBytes.length; }
+          @Override
+          public byte[] getBytes() { return fileBytes; }
+          @Override
+          public java.io.InputStream getInputStream() { 
+            return new java.io.ByteArrayInputStream(fileBytes); 
+          }
+          @Override
+          public void transferTo(java.io.File dest) throws java.io.IOException, IllegalStateException {}
+          @Override
+          public void transferTo(java.nio.file.Path dest) throws java.io.IOException, IllegalStateException {}
+        };
+        
+        String imageUrl = s3ImageUploadService.uploadImage(mf);
         uploadedImageUrl[0] = imageUrl;
         imagePreview.setSrc(imageUrl);
-        Notification.show("Imagen cargada correctamente", 2000, Notification.Position.BOTTOM_START)
+        Notification.show("✓ Imagen subida a S3 correctamente", 2000, Notification.Position.BOTTOM_START)
             .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
       } catch (Exception e) {
-        Notification.show("Error al cargar imagen: " + e.getMessage(), 3000, Notification.Position.TOP_CENTER)
+        Notification.show("✗ Error al cargar imagen: " + e.getMessage(), 3000, Notification.Position.TOP_CENTER)
             .addThemeVariants(NotificationVariant.LUMO_ERROR);
+        e.printStackTrace();
       }
     });
     
     upload.addFailedListener(event -> {
-      Notification.show("Error: " + event.getReason().getMessage(), 3000, Notification.Position.TOP_CENTER)
+      Notification.show("✗ Error: " + event.getReason().getMessage(), 3000, Notification.Position.TOP_CENTER)
           .addThemeVariants(NotificationVariant.LUMO_ERROR);
     });
 
@@ -191,10 +218,10 @@ public class AdminInventarioView extends VerticalLayout implements RouteGuard {
 
       try {
         if (isEditMode) {
-          // Si hay imagen anterior diferente, eliminarla
+          // Si hay imagen anterior diferente, eliminarla de S3
           if (productToEdit.getImageUrl() != null && 
               !productToEdit.getImageUrl().equals(uploadedImageUrl[0])) {
-            imageUploadService.deleteImage(productToEdit.getImageUrl());
+            s3ImageUploadService.deleteImage(productToEdit.getImageUrl());
           }
           // Se for edição, chamamos o update passando o ID original
           productService.update(productToEdit.getId(), p);

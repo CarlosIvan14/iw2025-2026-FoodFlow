@@ -111,6 +111,20 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-actuator</artifactId>
     </dependency>
+
+    <!-- Dotenv para leer variables de .env en desarrollo -->
+    <dependency>
+      <groupId>io.github.cdimascio</groupId>
+      <artifactId>dotenv-java</artifactId>
+      <version>3.0.0</version>
+    </dependency>
+
+    <!-- AWS SDK v2 para S3 (cuando uses S3 en lugar de carpeta local) -->
+    <dependency>
+      <groupId>software.amazon.awssdk</groupId>
+      <artifactId>s3</artifactId>
+      <version>2.20.0</version>
+    </dependency>
   </dependencies>
 
   <build>
