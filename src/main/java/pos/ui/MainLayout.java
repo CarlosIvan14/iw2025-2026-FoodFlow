@@ -79,11 +79,13 @@ public class MainLayout extends AppLayout {
         }
 
         if (hasRole(role, "COCINERO") || hasRole(role, "ADMIN")) {
+            list.add(itemLink("Mesas", "/mesas"));
             list.add(itemLink("Cocina", "/cocina"));
         }
 
         if (hasRole(role, "CAJERO") || hasRole(role, "ADMIN")) {
             list.add(itemLink("Caja", "/admin/caja"));
+            list.add(itemLink("Mesas", "/mesas"));
         }
 
         if (hasRole(role, "ADMIN")) {
@@ -96,7 +98,8 @@ public class MainLayout extends AppLayout {
 
         // Opciones para cliente (si existe rol CLIENT o CLIENTE)
         if (hasRole(role, "CLIENT") || hasRole(role, "CLIENTE")) {
-            list.add(itemLink("Mis Pedidos", "/mis-pedidos"));
+            list.add(itemLink("Realizar Pedido", "/ordenes"));
+            list.add(itemLink("Mis Pedidos", "/pedidos"));
         }
 
         // Separador visual
