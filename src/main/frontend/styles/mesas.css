@@ -325,3 +325,481 @@
   }
 }
 
+/* src/main/resources/META-INF/resources/frontend/styles/mesas.css */
+
+/* ===== DIÁLOGO DE PEDIDOS ===== */
+.pedidos-dialog::part(overlay) {
+  background: rgba(0, 0, 0, 0.40);
+  backdrop-filter: blur(6px);
+}
+
+.pedidos-dialog::part(content) {
+  padding: 0 !important;
+  overflow: hidden !important;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 18px 60px rgba(0,0,0,.22);
+  clip-path: inset(0 round 12px);
+}
+
+.pedidos-dialog::part(header) {
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+  background: #fff;
+}
+
+.pedidos-dialog::part(footer) { display: none; }
+
+.pedidos-dialog-close {
+  margin-left: auto;
+  border-radius: 999px;
+}
+
+.pedidos-dialog-content {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  max-height: 65vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: #fff;
+}
+
+.pedidos-dialog-content::-webkit-scrollbar { width: 0; height: 0; }
+.pedidos-dialog-content { scrollbar-width: none; }
+
+.pedidos-empty {
+  display: grid;
+  place-items: center;
+  padding: 48px 18px;
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.04);
+  color: #0f172a;
+  font-weight: 700;
+  min-height: 220px;
+}
+
+/* ===== CARDS ===== */
+.pedido-card {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  background: #ffffff;
+  border-radius: 14px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  padding: 16px;
+  box-shadow: 0 6px 22px rgba(15, 23, 42, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pedido-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.10);
+}
+
+.pedido-card-header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+.pedido-card-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.pedido-card-info {
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 600;
+}
+
+/* ===== ACCIONES ===== */
+.pedido-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  width: 100%;
+}
+
+.pedido-action-btn {
+  box-sizing: border-box;
+  border: none !important;
+  box-shadow: none !important;
+
+  border-radius: 12px;
+  padding: 0 12px !important;
+  height: 36px !important;
+  min-height: 36px !important;
+  line-height: 36px !important;
+
+  font-weight: 800;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  cursor: pointer;
+}
+
+.pedido-action-btn vaadin-icon { width: 16px; height: 16px; }
+
+.pedido-btn-view { background: rgba(37, 99, 235, 0.10); color: #1d4ed8; }
+.pedido-btn-view:hover { background: rgba(37, 99, 235, 0.16); }
+
+.pedido-btn-add { background: rgba(22, 163, 74, 0.12); color: #16a34a; }
+.pedido-btn-add:hover { background: rgba(22, 163, 74, 0.18); }
+
+.pedido-btn-icon {
+  width: 40px !important;
+  height: 36px !important;
+  min-width: 40px !important;
+  padding: 0 !important;
+  border-radius: 12px;
+}
+
+.pedido-btn-cancel { background: rgba(239, 68, 68, 0.10); color: #ef4444; }
+.pedido-btn-cancel:hover { background: rgba(239, 68, 68, 0.16); }
+
+.pedido-btn-paid { background: rgba(236, 72, 153, 0.10); color: #db2777; }
+.pedido-btn-paid:hover { background: rgba(236, 72, 153, 0.16); }
+
+/* ===== DETALLES (VER MÁS) — NUEVO / MEJORADO ===== */
+.pedido-detail-dialog::part(overlay) {
+  background: rgba(0, 0, 0, 0.40);
+  backdrop-filter: blur(6px);
+}
+
+.pedido-detail-dialog::part(content) {
+  padding: 0 !important;
+  overflow: hidden !important;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 18px 60px rgba(0,0,0,.22);
+  clip-path: inset(0 round 14px);
+}
+
+.pedido-detail-dialog::part(header) {
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+  background: #fff;
+}
+
+.pedido-detail-dialog::part(footer) { display: none; }
+
+.pedido-detail-close-x {
+  margin-left: auto;
+  border-radius: 999px;
+}
+
+/* Contenido interno */
+.pedido-detail-content {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  max-height: 72vh;
+  overflow: auto;
+  background: #fff;
+}
+
+.pedido-detail-content::-webkit-scrollbar { width: 0; height: 0; }
+.pedido-detail-content { scrollbar-width: none; }
+
+/* Resumen */
+.pedido-summary {
+  padding: 14px;
+  background: rgba(37, 99, 235, 0.06);
+  border-radius: 12px;
+  border: 1px solid rgba(37, 99, 235, 0.12);
+  display: grid;
+  gap: 10px;
+}
+
+.pedido-summary-row {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 10px;
+  align-items: center;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.pedido-summary-row span:first-child {
+  color: #64748b;
+  font-weight: 800;
+}
+
+.pedido-items-title {
+  margin: 6px 0 0 0;
+  font-size: 18px;
+  font-weight: 900;
+  color: #0f172a;
+}
+
+.pedido-items-empty {
+  padding: 16px;
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.04);
+  font-weight: 800;
+  color: #0f172a;
+}
+
+/* Lista items (ya la tenías, la dejo, pero con mejor row) */
+.pedido-items-list {
+  padding: 12px;
+  background: rgba(15, 23, 42, 0.03);
+  border-radius: 12px;
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ✅ Row bonito: nombre | chip qty | precio */
+.pedido-item-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 10px;
+  align-items: center;
+  padding: 12px 12px;
+  background: #fff;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 12px;
+}
+
+.pedido-item-row .item-name {
+  font-weight: 900;
+  color: #0f172a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pedido-item-row .item-qty {
+  font-weight: 900;
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.06);
+  color: #0f172a;
+}
+
+.pedido-item-row .item-price {
+  font-weight: 900;
+  color: #16a34a;
+}
+
+/* Botón cerrar (reuso) */
+.pedido-detail-close-btn {
+  margin-top: 8px;
+  width: 100%;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  background: rgba(15, 23, 42, 0.04);
+  cursor: pointer;
+  font-weight: 900;
+  color: #0f172a;
+  text-transform: uppercase;
+  font-size: 12px;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 480px) {
+  .pedido-action-btn {
+    height: 34px !important;
+    min-height: 34px !important;
+    line-height: 34px !important;
+    font-size: 10px;
+  }
+  .pedido-btn-icon {
+    height: 34px !important;
+    min-width: 38px !important;
+    width: 38px !important;
+  }
+
+  .pedido-summary-row {
+    grid-template-columns: 90px 1fr;
+  }
+}
+
+/* ==============================
+   ✅ MESAS: MAPA RESPONSIVE (NO OVERFLOW)
+   ============================== */
+.mesas-view {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+.mesas-header {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.mesas-canvas {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+.mesas-grid {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box;
+
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 14px;
+  align-content: start;
+}
+
+.mesas-grid .mesa-btn,
+.mesas-grid .mesa-card {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+.mesa-inner {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
+
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.mesa-texts {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.mesa-label,
+.mesa-badge {
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 480px) {
+  .mesas-grid {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+  }
+
+  .mesas-canvas {
+    padding: 12px;
+  }
+}
+/* =========================================================
+   ✅ FIX DEFINITIVO: esquinas grises/negras en dialogs
+   (causado por contenido interno con bordes redondeados + fondos)
+   Pegar AL FINAL de mesas.css
+   ========================================================= */
+
+/* ---------- Dialog "Ver más" (detalle) ---------- */
+.pedido-detail-dialog::part(overlay) {
+  background: rgba(0, 0, 0, 0.40);
+  backdrop-filter: blur(6px);
+}
+
+/* Outer dialog: recorta y redondea SOLO UNA VEZ */
+.pedido-detail-dialog::part(content) {
+  padding: 0 !important;
+  overflow: hidden !important;
+  border-radius: 16px;
+  background: #fff !important;
+  box-shadow: 0 18px 60px rgba(0,0,0,.22);
+  clip-path: inset(0 round 16px);
+}
+
+/* Header blanco sólido */
+.pedido-detail-dialog::part(header) {
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+  background: #fff !important;
+}
+
+/* Oculta footer nativo si aparece */
+.pedido-detail-dialog::part(footer) { display: none; }
+
+.pedido-detail-close-x {
+  margin-left: auto;
+  border-radius: 999px;
+}
+
+/* Shell: columna completa */
+.pedido-detail-shell {
+  display: flex;
+  flex-direction: column;
+  background: #fff !important;
+}
+
+/* Body: SIN redondeo externo (esto mata el “doble radio”) */
+.pedido-detail-content {
+  padding: 16px;
+  background: #fff !important;
+  border-radius: 0 !important;  /* ✅ clave */
+  max-height: 72vh;
+  overflow: auto;
+}
+
+/* Footer pegado a las esquinas del dialog (sin radios internos) */
+.pedido-detail-footer {
+  padding: 14px 16px;
+  background: #fff !important;
+  border-top: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 0 !important;  /* ✅ clave */
+}
+
+/* Botón cerrar full width */
+.pedido-detail-close-btn {
+  width: 100%;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  background: rgba(15, 23, 42, 0.04);
+  cursor: pointer;
+  font-weight: 900;
+  color: #0f172a;
+  text-transform: uppercase;
+  font-size: 12px;
+}
+
+/* ---------- (Opcional) Asegura que el dialog de pedidos también sea sólido ---------- */
+.pedidos-dialog::part(content) {
+  background: #fff !important;
+  overflow: hidden !important;
+}
+

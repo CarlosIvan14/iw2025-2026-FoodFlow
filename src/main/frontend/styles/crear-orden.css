@@ -1,3 +1,4 @@
+/* src/main/resources/META-INF/resources/frontend/styles/crear-orden.css */
 /* === CREAR ORDEN VIEW - CLIENTE === */
 
 /* Sección para llevar */
@@ -211,6 +212,7 @@
   color: var(--text-light);
   font-weight: 600;
   cursor: pointer;
+  position: relative;
 }
 
 .mesa-libre {
@@ -276,22 +278,10 @@
   font-weight: 600;
 }
 
-.badge-listo {
-  background: var(--accent-green);
-}
-
-.badge-cocina {
-  background: #ff9800;
-}
-
-.badge-pendiente {
-  background: #ffc107;
-  color: var(--text-light);
-}
-
-.badge-pagado {
-  background: #9c27b0;
-}
+.badge-listo { background: var(--accent-green); }
+.badge-cocina { background: #ff9800; }
+.badge-pendiente { background: #ffc107; color: var(--text-light); }
+.badge-pagado { background: #9c27b0; }
 
 /* Layout responsive */
 @media (max-width: 768px) {
@@ -302,4 +292,68 @@
   .ue-product-img {
     height: 100px;
   }
+}
+
+/* ==============================
+   TABS TIPO CHROME (CLIENTE)
+   ============================== */
+
+.ue-ordertypes {
+  width: 100%;
+}
+
+.ue-tabs {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+  padding: 0 6px;
+  margin-bottom: -1px;
+}
+
+.ue-tab-btn {
+  border: 1px solid rgba(0,0,0,0.14) !important;
+  background: rgba(255,255,255,0.55) !important;
+  border-bottom: none !important;
+
+  padding: 10px 14px !important;
+  border-radius: 14px 14px 0 0 !important;
+
+  font-weight: 800 !important;
+  cursor: pointer;
+
+  box-shadow: 0 6px 18px rgba(0,0,0,0.06) !important;
+  opacity: 0.85;
+}
+
+.ue-tab-btn.ue-tab-active {
+  background: rgba(255,255,255,0.95) !important;
+  opacity: 1;
+  transform: translateY(1px);
+}
+
+.ue-tab-panel {
+  border: 1px solid rgba(0,0,0,0.14);
+  background: rgba(255,255,255,0.70);
+  border-radius: 16px;
+  padding: 14px;
+  box-shadow: 0 10px 26px rgba(0,0,0,0.06);
+}
+
+/* Evita overflow horizontal del mapa dentro del panel */
+.ue-tab-panel .ue-mesas-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+/* Grid de mesas RESPONSIVE (sin reventar ancho) */
+.ue-tab-panel .ue-table-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+  width: 100%;
+}
+
+.ue-tab-panel .mesa-btn {
+  width: 100% !important;
+  min-width: 0 !important;
 }
