@@ -1,6 +1,7 @@
 /* === CLIENTE PEDIDOS VIEW === */
 .cliente-pedidos-view {
-  background: var(--bg-main);
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  min-height: 100vh;
 }
 
 .pedidos-header {
@@ -8,14 +9,16 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 2rem;
-  padding-bottom: 1rem;
-  border-bottom: 2px solid var(--border-glass);
+  padding-bottom: 1.5rem;
+  border-bottom: 2px solid rgba(15, 23, 42, 0.08);
 }
 
 .pedidos-title {
   margin: 0;
-  font-size: 1.8rem;
-  color: var(--text-light);
+  font-size: 2rem;
+  font-weight: 900;
+  color: #0f172a;
+  letter-spacing: -0.5px;
 }
 
 .pedidos-scroller {
@@ -26,135 +29,254 @@
 .pedidos-list {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.2rem;
 }
 
 .pedidos-empty,
 .pedidos-error {
-  padding: 2rem;
+  padding: 3rem 2rem;
   text-align: center;
-  color: var(--text-muted);
-  background: var(--glass);
-  border-radius: var(--radius);
+  color: #64748b;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 14px;
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  font-weight: 700;
 }
 
+/* ===== CARD MEJORADA ===== */
 .pedido-card {
-  background: var(--glass-strong);
-  border: 1px solid var(--border-glass);
-  border-radius: var(--radius);
-  padding: 1.5rem;
-  transition: var(--transition);
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  padding: 0;
+  box-shadow: 0 6px 22px rgba(15, 23, 42, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
 }
 
 .pedido-card:hover {
-  background: rgba(255, 255, 255, 0.75);
-  border-color: var(--accent-blue);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  transform: translateY(-4px);
+  box-shadow: 0 14px 36px rgba(15, 23, 42, 0.12);
+  border-color: rgba(37, 99, 235, 0.2);
 }
 
-.pedido-card-header {
+/* TOP: Número + Meta + Estado + Botones */
+.pedido-card-top {
+  padding: 18px 20px;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.04) 0%, rgba(16, 185, 129, 0.04) 100%);
+}
+
+.pedido-card-left {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .pedido-number {
-  font-weight: 600;
+  font-weight: 900;
   font-size: 1.1rem;
-  color: var(--text-light);
+  color: #0f172a;
+  letter-spacing: -0.3px;
 }
 
-.status-badge {
-  padding: 0.4rem 0.8rem;
-  border-radius: 20px;
+.pedido-meta {
   font-size: 0.85rem;
-  font-weight: 500;
+  color: #64748b;
+  font-weight: 600;
+}
+
+/* Estado + Botón Cancelar */
+.status-badge {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 800;
   display: inline-block;
+  letter-spacing: 0.5px;
 }
 
 .status-pending {
-  background: rgba(255, 193, 7, 0.2);
-  color: #ff9800;
+  background: rgba(255, 193, 7, 0.15);
+  color: #f59e0b;
 }
 
 .status-in-preparation {
-  background: rgba(33, 150, 243, 0.2);
-  color: #2196f3;
+  background: rgba(59, 130, 246, 0.15);
+  color: #3b82f6;
 }
 
 .status-listo {
-  background: rgba(76, 175, 80, 0.2);
-  color: #4caf50;
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
 }
 
 .status-pagado {
-  background: rgba(156, 39, 176, 0.2);
-  color: #9c27b0;
+  background: rgba(139, 92, 246, 0.15);
+  color: #8b5cf6;
 }
 
 .status-canceled {
-  background: rgba(244, 67, 54, 0.2);
-  color: #f44336;
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
 }
 
 .status-unknown {
-  background: rgba(158, 158, 158, 0.2);
-  color: #9e9e9e;
+  background: rgba(148, 163, 184, 0.15);
+  color: #94a3b8;
 }
 
-.pedido-date {
-  font-size: 0.9rem;
-  color: var(--text-muted);
-  margin-bottom: 1rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid var(--border-glass);
+.pedido-btn-cancel {
+  font-weight: 800;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-radius: 10px;
 }
 
-.pedido-items {
-  margin: 1rem 0;
+/* BODY: Items */
+.pedido-card-body {
+  padding: 18px 20px;
+  min-height: 120px;
 }
 
-.pedido-item-row {
+.pedido-items-block {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.5rem 0;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pedido-items-title {
   font-size: 0.95rem;
+  font-weight: 900;
+  color: #0f172a;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.pedido-items-empty {
+  padding: 16px;
+  text-align: center;
+  background: rgba(15, 23, 42, 0.04);
+  border-radius: 12px;
+  color: #64748b;
+  font-weight: 700;
+}
+
+.pedido-items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ✅ Fila de Item: Nombre + Cantidad | Precio */
+.pedido-item-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 12px;
+  background: rgba(15, 23, 42, 0.03);
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.pedido-item-row:hover {
+  background: rgba(37, 99, 235, 0.06);
+  border-color: rgba(37, 99, 235, 0.12);
+}
+
+.pedido-item-left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
 }
 
 .pedido-item-name {
-  flex: 1;
-  color: var(--text-light);
+  font-weight: 800;
+  color: #0f172a;
+  font-size: 0.95rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .pedido-item-qty {
-  color: var(--text-muted);
-  margin: 0 0.5rem;
+  font-weight: 700;
+  font-size: 0.8rem;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.06);
+  color: #0f172a;
+  width: fit-content;
 }
 
 .pedido-item-price {
-  font-weight: 600;
-  color: var(--accent-green);
+  font-weight: 900;
+  color: #16a34a;
+  font-size: 1rem;
+  text-align: right;
 }
 
-.pedido-total {
+/* FOOTER: Total */
+.pedido-card-footer {
+  padding: 14px 20px;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(37, 99, 235, 0.04) 100%);
+  border-top: 2px solid rgba(15, 23, 42, 0.06);
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  gap: 0.5rem;
-  padding-top: 1rem;
-  border-top: 2px solid var(--border-glass);
-  margin-top: 1rem;
+  gap: 10px;
 }
 
 .pedido-total-label {
-  color: var(--text-muted);
-  font-weight: 600;
+  color: #64748b;
+  font-weight: 900;
+  font-size: 0.95rem;
 }
 
 .pedido-total-amount {
-  font-size: 1.2rem;
+  font-size: 1.3rem;
+  font-weight: 900;
+  color: #10b981;
+  letter-spacing: -0.5px;
+}
+
+/* ===== DIALOG CONFIRMAR CANCELACIÓN ===== */
+.dialog-message {
+  padding: 16px;
+  text-align: center;
+  font-size: 1rem;
+  color: #0f172a;
   font-weight: 700;
-  color: var(--accent-green);
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 480px) {
+  .pedidos-title {
+    font-size: 1.5rem;
+  }
+
+  .pedido-card-top {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .pedido-item-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .pedido-item-price {
+    text-align: left;
+  }
+
+  .pedido-total-amount {
+    font-size: 1.1rem;
+  }
 }

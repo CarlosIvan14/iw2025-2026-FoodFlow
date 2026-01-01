@@ -9,6 +9,9 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.Scroller;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.dependency.CssImport;
+import com.vaadin.flow.component.dialog.Dialog;
+import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import pos.auth.AuthService;
@@ -20,7 +23,7 @@ import pos.service.OrderService;
 import pos.ui.MainLayout;
 
 import java.time.format.DateTimeFormatter;
-import java.util.Comparator;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -56,7 +59,6 @@ public class ClientePedidosView extends VerticalLayout implements RouteGuard {
     refreshBtn.addClickListener(e -> refreshOrders());
 
     header.add(title, refreshBtn);
-    header.getStyle().set("display", "flex").set("justify-content", "space-between").set("align-items", "center");
 
     // Lista de pedidos
     ordersList.addClassName("pedidos-list");
@@ -86,7 +88,7 @@ public class ClientePedidosView extends VerticalLayout implements RouteGuard {
         return;
       }
 
-      // Convertir a lista mutable y ordenar
+      // Ordenar por fecha descendente
       java.util.List<Order> mutableOrders = new java.util.ArrayList<>(clientOrders);
       mutableOrders.sort((o1, o2) -> {
         if (o1.getCreatedAt() == null && o2.getCreatedAt() == null) return 0;
@@ -111,63 +113,54 @@ public class ClientePedidosView extends VerticalLayout implements RouteGuard {
     var card = new Div();
     card.addClassName("pedido-card");
 
-    // Encabezado: número y estado
-    var headerDiv = new Div();
-    headerDiv.addClassName("pedido-card-header");
+    // TOP: número + estado + botones
+    var top = new HorizontalLayout();
+    top.addClassName("pedido-card-top");
+    top.setWidthFull();
+    top.setAlignItems(HorizontalLayout.Alignment.CENTER);
+    top.setJustifyContentMode(HorizontalLayout.JustifyContentMode.BETWEEN);
+
+    // Izquierda: número y meta
+    var leftTop = new Div();
+    leftTop.addClassName("pedido-card-left");
 
     var orderNum = new Span("Pedido #" + order.getId());
     orderNum.addClassName("pedido-number");
 
+    var meta = new Span(buildMeta(order));
+    meta.addClassName("pedido-meta");
+
+    leftTop.add(orderNum, meta);
+
+    // Derecha: estado + botones
+    var rightTop = new HorizontalLayout();
+    rightTop.setSpacing(true);
+    rightTop.setAlignItems(HorizontalLayout.Alignment.CENTER);
+
     var statusBadge = createStatusBadge(order.getStatus());
+    rightTop.add(statusBadge);
 
-    var headerContent = new Div(orderNum, statusBadge);
-    headerContent.getStyle().set("display", "flex").set("justify-content", "space-between").set("align-items", "center");
-
-    headerDiv.add(headerContent);
-
-    // Fecha y hora
-    var dateDiv = new Div();
-    dateDiv.addClassName("pedido-date");
-
-    String dateStr = "Fecha desconocida";
-    if (order.getCreatedAt() != null) {
-      DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
-      dateStr = order.getCreatedAt().format(formatter);
+    // Botón cancelar si está PENDING
+    if (order.getStatus() == OrderStatus.PENDING) {
+      var btnCancel = new Button("Cancelar Pedido");
+      btnCancel.addClassName("pedido-btn-cancel");
+      btnCancel.addThemeVariants(ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_SMALL);
+      btnCancel.addClickListener(e -> showCancelConfirmation(order));
+      rightTop.add(btnCancel);
     }
 
-    dateDiv.add(new Span(dateStr));
+    top.add(leftTop, rightTop);
 
-    // Items del pedido
-    var itemsDiv = new Div();
-    itemsDiv.addClassName("pedido-items");
+    // BODY: items con fotos
+    var body = new Div();
+    body.addClassName("pedido-card-body");
 
-    try {
-      var items = getOrderItems(order);
-      if (items != null && !items.isEmpty()) {
-        for (OrderItem item : items) {
-          var itemRow = new Div();
-          itemRow.addClassName("pedido-item-row");
+    var itemsBlock = buildItemsBlock(order);
+    body.add(itemsBlock);
 
-          var itemName = new Span(Optional.ofNullable(item.getProductName()).orElse("Producto"));
-          itemName.addClassName("pedido-item-name");
-
-          var itemQty = new Span("x" + item.getQuantity());
-          itemQty.addClassName("pedido-item-qty");
-
-          var itemPrice = new Span(String.format("€ %.2f", item.getTotal()));
-          itemPrice.addClassName("pedido-item-price");
-
-          itemRow.add(itemName, itemQty, itemPrice);
-          itemsDiv.add(itemRow);
-        }
-      }
-    } catch (Exception e) {
-      System.err.println("Error reading order items: " + e.getMessage());
-    }
-
-    // Total
-    var totalDiv = new Div();
-    totalDiv.addClassName("pedido-total");
+    // FOOTER: total
+    var footer = new Div();
+    footer.addClassName("pedido-card-footer");
 
     var totalLabel = new Span("Total:");
     totalLabel.addClassName("pedido-total-label");
@@ -175,16 +168,155 @@ public class ClientePedidosView extends VerticalLayout implements RouteGuard {
     var totalAmount = new Span(String.format("€ %.2f", order.getTotal()));
     totalAmount.addClassName("pedido-total-amount");
 
-    totalDiv.add(totalLabel, totalAmount);
+    footer.add(totalLabel, totalAmount);
 
-    // Contenedor principal del card
-    var content = new VerticalLayout(headerDiv, dateDiv, itemsDiv, totalDiv);
-    content.setPadding(false);
-    content.setSpacing(true);
-    content.addClassName("pedido-card-content");
-
-    card.add(content);
+    card.add(top, body, footer);
     return card;
+  }
+
+  private void showCancelConfirmation(Order order) {
+    Dialog dialog = new Dialog();
+    dialog.setHeaderTitle("Cancelar Pedido");
+
+    var confirmMsg = new Div(new Span("¿Estás seguro de que deseas cancelar el pedido #" + order.getId() + "?"));
+    confirmMsg.addClassName("dialog-message");
+
+    var btnConfirm = new Button("Sí, Cancelar", e -> {
+      try {
+        orderService.updateStatus(order.getId(), OrderStatus.CANCELED);
+        Notification.show("Pedido cancelado exitosamente", 3000, Notification.Position.TOP_CENTER)
+            .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+        dialog.close();
+        refreshOrders();
+      } catch (Exception ex) {
+        Notification.show("Error al cancelar: " + ex.getMessage(), 3000, Notification.Position.TOP_CENTER)
+            .addThemeVariants(NotificationVariant.LUMO_ERROR);
+      }
+    });
+    btnConfirm.addThemeVariants(ButtonVariant.LUMO_ERROR);
+
+    var btnCancel = new Button("No, Mantener", e -> dialog.close());
+    btnCancel.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+
+    dialog.add(confirmMsg);
+    dialog.getFooter().add(btnCancel, btnConfirm);
+    dialog.open();
+  }
+
+  private String buildMeta(Order order) {
+    String fecha = "—";
+    try {
+      if (order.getCreatedAt() != null) {
+        fecha = order.getCreatedAt().format(DateTimeFormatter.ofPattern("dd/MM HH:mm"));
+      }
+    } catch (Exception ignored) {}
+    return "Creado: " + fecha;
+  }
+
+  private Div buildItemsBlock(Order order) {
+    var wrap = new Div();
+    wrap.addClassName("pedido-items-block");
+
+    var title = new Span("Artículos");
+    title.addClassName("pedido-items-title");
+    wrap.add(title);
+
+    Collection<?> items = tryGetItems(order);
+    if (items == null || items.isEmpty()) {
+      var no = new Span("No hay artículos en este pedido");
+      no.addClassName("pedido-items-empty");
+      wrap.add(no);
+      return wrap;
+    }
+
+    var ul = new Div();
+    ul.addClassName("pedido-items-list");
+
+    for (Object it : items) {
+      ul.add(renderItemLine(it));
+    }
+
+    wrap.add(ul);
+    return wrap;
+  }
+
+  private Div renderItemLine(Object item) {
+    var row = new Div();
+    row.addClassName("pedido-item-row");
+
+    // Información del item
+    String name = firstNonBlank(
+        tryInvokeToString(item, "getProductName"),
+        tryInvokeToString(item, "getName"),
+        "Artículo"
+    );
+
+    String qty = firstNonBlank(
+        tryInvokeToString(item, "getQuantity"),
+        "1"
+    );
+
+    String price = firstNonBlank(
+        tryInvokeToString(item, "getTotal"),
+        "0.00"
+    );
+
+    // Contenedor izquierdo con info
+    var left = new Div();
+    left.addClassName("pedido-item-left");
+
+    var itemName = new Span(name);
+    itemName.addClassName("pedido-item-name");
+
+    var itemQty = new Span("x" + qty);
+    itemQty.addClassName("pedido-item-qty");
+
+    left.add(itemName, itemQty);
+
+    // Precio a la derecha
+    var itemPrice = new Span("€ " + String.format("%.2f", Double.parseDouble(price)));
+    itemPrice.addClassName("pedido-item-price");
+
+    row.add(left, itemPrice);
+    return row;
+  }
+
+  @SuppressWarnings("unchecked")
+  private Collection<?> tryGetItems(Order order) {
+    Object v;
+
+    v = tryInvoke(order, "getItems");
+    if (v instanceof Collection) return (Collection<?>) v;
+
+    v = tryInvoke(order, "getOrderItems");
+    if (v instanceof Collection) return (Collection<?>) v;
+
+    v = tryInvoke(order, "getLines");
+    if (v instanceof Collection) return (Collection<?>) v;
+
+    return null;
+  }
+
+  private Object tryInvoke(Object target, String methodName) {
+    try {
+      var m = target.getClass().getMethod(methodName);
+      return m.invoke(target);
+    } catch (Exception ignored) {
+      return null;
+    }
+  }
+
+  private String tryInvokeToString(Object target, String methodName) {
+    Object v = tryInvoke(target, methodName);
+    return v == null ? null : String.valueOf(v);
+  }
+
+  private String firstNonBlank(String... vals) {
+    if (vals == null) return "";
+    for (String v : vals) {
+      if (v != null && !v.trim().isBlank()) return v.trim();
+    }
+    return "";
   }
 
   private com.vaadin.flow.component.Component createStatusBadge(OrderStatus status) {
@@ -222,25 +354,5 @@ public class ClientePedidosView extends VerticalLayout implements RouteGuard {
     }
 
     return badge;
-  }
-
-  @SuppressWarnings("unchecked")
-  private java.util.List<OrderItem> getOrderItems(Order order) {
-    try {
-      var m = order.getClass().getMethod("getItems");
-      return (java.util.List<OrderItem>) m.invoke(order);
-    } catch (Exception e1) {
-      try {
-        var m = order.getClass().getMethod("getOrderItems");
-        return (java.util.List<OrderItem>) m.invoke(order);
-      } catch (Exception e2) {
-        try {
-          var m = order.getClass().getMethod("getLines");
-          return (java.util.List<OrderItem>) m.invoke(order);
-        } catch (Exception e3) {
-          return null;
-        }
-      }
-    }
   }
 }
