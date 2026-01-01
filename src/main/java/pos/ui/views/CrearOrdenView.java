@@ -153,14 +153,19 @@ public class CrearOrdenView extends VerticalLayout implements RouteGuard {
     // Cliente: tabs tipo Chrome (Sucursal vs Para llevar)
     if (isClientMode) {
       var carryOutSection = buildCarryOutSection();
-      left.add(buildOrderTypeTabs(tablesSection, carryOutSection));
+      Component tabs = buildOrderTypeTabs(tablesSection, carryOutSection);
+      left.add(tabs);
+
+      left.setFlexGrow(0, tabs); // 👈 tabs (mesas/para llevar) NO crecen
     } else {
       left.add(tablesSection);
+      left.setFlexGrow(0, tablesSection); 
     }
 
     // Productos siempre
     var productsSection = buildProductsSection(menu);
     left.add(productsSection);
+    left.setFlexGrow(0, productsSection); // 👈 productos NO crecen (scroll interno en CSS)
 
     // Columna derecha: carrito
     var right = buildCartSection(orders, auth);
@@ -425,24 +430,16 @@ public class CrearOrdenView extends VerticalLayout implements RouteGuard {
 
   private List<TableSpot> sortTablesByOrderPriority(List<TableSpot> tables, OrderService orders) {
     return tables.stream()
-        .sorted(Comparator.comparingInt(t -> getTablePriority(t, orders)))
+        .sorted(Comparator.comparing(t -> extractTableNumber(t.getCode())))
         .collect(Collectors.toList());
   }
 
-  private int getTablePriority(TableSpot table, OrderService orders) {
-    List<Order> activeOrders = orders.findActiveOrdersByTable(table.getId());
-    if (activeOrders.isEmpty()) return 5;
-
-    boolean hasListo = activeOrders.stream().anyMatch(o -> o.getStatus() == OrderStatus.LISTO);
-    boolean hasInPreparation = activeOrders.stream().anyMatch(o -> o.getStatus() == OrderStatus.IN_PREPARATION);
-    boolean hasPending = activeOrders.stream().anyMatch(o -> o.getStatus() == OrderStatus.PENDING);
-    boolean hasPagado = activeOrders.stream().anyMatch(o -> o.getStatus() == OrderStatus.PAGADO);
-
-    if (hasListo) return 0;
-    if (hasInPreparation) return 1;
-    if (hasPending) return 2;
-    if (hasPagado) return 3;
-    return 4;
+  private String extractTableNumber(String code) {
+    if (code == null) return "ZZZ";
+    // Extraer números del código (ej: "M1" -> "1", "Mesa 2" -> "2")
+    String nums = code.replaceAll("[^0-9]", "");
+    // Rellenar con ceros a la izquierda para ordenamiento numérico
+    return nums.isEmpty() ? code : String.format("%010d", Integer.parseInt(nums));
   }
 
   private String getTableStatusClass(TableSpot table, OrderService orders) {
@@ -521,7 +518,8 @@ public class CrearOrdenView extends VerticalLayout implements RouteGuard {
   private Component buildProductsSection(MenuService menu) {
     var section = new Div();
     section.addClassName("ue-section");
-
+    section.addClassName("ue-products-section");
+    
     var top = new Div();
     top.addClassName("ue-section-top");
 
@@ -538,10 +536,6 @@ public class CrearOrdenView extends VerticalLayout implements RouteGuard {
 
     productsList.addClassName("ue-products");
 
-    var scroller = new Scroller(productsList);
-    scroller.addClassName("ue-products-scroller");
-    scroller.setScrollDirection(Scroller.ScrollDirection.VERTICAL);
-
     search.addValueChangeListener(e -> {
       String q = e.getValue() == null ? "" : e.getValue().trim().toLowerCase();
       List<Product> all = menu.list();
@@ -553,12 +547,9 @@ public class CrearOrdenView extends VerticalLayout implements RouteGuard {
       refreshProducts(filtered);
     });
 
-    var wrap = new VerticalLayout(top, search, scroller);
-    wrap.setPadding(false);
-    wrap.setSpacing(true);
-    wrap.setHeightFull();
-    wrap.setFlexGrow(1, scroller);
+    var wrap = new Div();
     wrap.addClassName("ue-products-wrap");
+    wrap.add(top, search, productsList);
 
     section.add(wrap);
     return section;
@@ -876,7 +867,7 @@ public class CrearOrdenView extends VerticalLayout implements RouteGuard {
           return (java.util.Collection<?>) m.invoke(o);
         } catch (Exception e3) {
           return null;
-        }
+        } 
       }
     }
   }
