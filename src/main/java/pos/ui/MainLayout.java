@@ -72,23 +72,27 @@ public class MainLayout extends AppLayout {
             list.add(itemLink("Menú Digital", "/"));
         }
 
-        if (hasRole(role, "MESERO") || hasRole(role, "ADMIN")) {
+        if (hasRole(role, "MESERO")) {
             list.add(itemLink("Realizar Pedido", "/ordenes"));
             list.add(itemLink("Mesas", "/mesas"));
             list.add(itemLink("Caja", "/admin/caja"));
         }
 
-        if (hasRole(role, "COCINERO") || hasRole(role, "ADMIN")) {
+        if (hasRole(role, "COCINERO")) {
             list.add(itemLink("Mesas", "/mesas"));
             list.add(itemLink("Cocina", "/cocina"));
         }
 
-        if (hasRole(role, "CAJERO") || hasRole(role, "ADMIN")) {
+        if (hasRole(role, "CAJERO")) {
             list.add(itemLink("Caja", "/admin/caja"));
             list.add(itemLink("Mesas", "/mesas"));
         }
 
         if (hasRole(role, "ADMIN")) {
+            list.add(itemLink("Realizar Pedido", "/ordenes"));
+            list.add(itemLink("Mesas", "/mesas"));
+            list.add(itemLink("Cocina", "/cocina"));
+            list.add(itemLink("Caja", "/admin/caja"));
             list.add(itemLink("Productos", "/admin/productos"));
             list.add(itemLink("Ingredientes", "/admin/ingredientes"));
             list.add(itemLink("Anállisis de ventas", "/admin/analytics"));
