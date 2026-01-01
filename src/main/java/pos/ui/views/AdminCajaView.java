@@ -110,19 +110,19 @@ public class AdminCajaView extends VerticalLayout implements RouteGuard {
     btnCobrar.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
     btnCobrar.setWidthFull();
 
-    // AQUI ESTÁ A MUDANÇA: Abre o Dialog em vez de cobrar direto
+    // AQUÍ ESTÁ EL CAMBIO: Abre el diálogo en vez de cobrar directo
     btnCobrar.addClickListener(e -> showPaymentDialog(order));
 
     card.add(mesaTitle, totalLabel, totalValue, btnCobrar);
     return card;
   }
 
-  // --- NOVA FUNCIONALIDADE: DIÁLOGO DE PAGAMENTO ---
+  // --- NUEVA FUNCIONALIDAD: DIÁLOGO DE PAGAMENTO ---
   private void showPaymentDialog(Order order) {
     Dialog dialog = new Dialog();
     dialog.setHeaderTitle("Cobrar " + (order.getTableId() != null ? "Mesa " + order.getTableId() : "Orden"));
 
-    // --- 1. DEFINIÇÃO DAS VARIÁVEIS VISUAIS (Tudo aqui no topo) ---
+    // --- 1. DEFINICIÓN DE LAS VARIABLES VISUALES (Todo aquí al inicio) ---
 
     // Total
     H2 totalDisplay = new H2("€ " + order.getTotal());
@@ -140,28 +140,28 @@ public class AdminCajaView extends VerticalLayout implements RouteGuard {
     receivedField.setWidthFull();
     receivedField.setClearButtonVisible(true);
 
-    BigDecimalField tipField = new BigDecimalField("Propina / Gorjeta (€)");
+    BigDecimalField tipField = new BigDecimalField("Propina (€)");
     tipField.setValue(BigDecimal.ZERO);
     tipField.setWidthFull();
 
-    BigDecimalField changeField = new BigDecimalField("Cambio / Troco (€)");
+    BigDecimalField changeField = new BigDecimalField("Cambio (€)");
     changeField.setReadOnly(true);
     changeField.setWidthFull();
     changeField.setValue(BigDecimal.ZERO);
 
-    // CAMPOS DE EMAIL (Definidos aqui para não dar erro de "symbol not found")
+    // CAMPOS DE EMAIL (Definidos aquí para no dar error de "symbol not found")
     Checkbox sendReceiptCheck = new Checkbox("¿Enviar recibo por correo?");
 
     EmailField emailField = new EmailField("Correo del Cliente");
     emailField.setPlaceholder("cliente@email.com");
     emailField.setWidthFull();
-    emailField.setVisible(false); // Começa invisível
+    emailField.setVisible(false); // Comienza invisible
     emailField.setClearButtonVisible(true);
-    emailField.setErrorMessage("Correo inválido");
+    emailField.setErrorMessage("Correo no válido");
 
-    // --- 2. LÓGICA DE INTERFACE ---
+    // --- 2. LÓGICA DE INTERFAZ ---
 
-    // Mostrar/Esconder email (Agora funciona porque emailField já existe)
+    // Mostrar/Ocultar email (Ahora funciona porque emailField ya existe)
     sendReceiptCheck.addValueChangeListener(e -> {
       emailField.setVisible(e.getValue());
       if (e.getValue()) {
@@ -169,27 +169,33 @@ public class AdminCajaView extends VerticalLayout implements RouteGuard {
       }
     });
 
-    // Calcular Troco
+    // Calcular Cambio
     receivedField.addValueChangeListener(e -> {
       BigDecimal received = e.getValue() != null ? e.getValue() : BigDecimal.ZERO;
       BigDecimal total = order.getTotal();
+      PaymentMethod method = methodSelect.getValue();
 
-      if (received.compareTo(total) >= 0) {
-        changeField.setValue(received.subtract(total));
-        receivedField.setInvalid(false);
-      } else {
-        changeField.setValue(BigDecimal.ZERO);
-        if (methodSelect.getValue() == PaymentMethod.CASH) {
+      if (method == PaymentMethod.CASH) {
+        // Para efectivo, se requiere monto igual o mayor
+        if (received.compareTo(total) >= 0) {
+          changeField.setValue(received.subtract(total));
+          receivedField.setInvalid(false);
+        } else {
+          changeField.setValue(BigDecimal.ZERO);
           receivedField.setInvalid(true);
           receivedField.setErrorMessage("Monto insuficiente");
         }
+      } else {
+        // Para tarjeta, no se necesita cambio
+        changeField.setValue(BigDecimal.ZERO);
+        receivedField.setInvalid(false);
       }
     });
 
     Button btnExact = new Button("Valor Exacto", e -> receivedField.setValue(order.getTotal()));
     btnExact.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL);
 
-    // Mudar Dinheiro/Cartão
+    // Cambiar Efectivo/Tarjeta
     methodSelect.addValueChangeListener(e -> {
       boolean isCash = e.getValue() == PaymentMethod.CASH;
       receivedField.setVisible(isCash);
@@ -198,7 +204,7 @@ public class AdminCajaView extends VerticalLayout implements RouteGuard {
       if (!isCash) receivedField.setValue(order.getTotal());
     });
 
-    // --- 3. BOTÕES E AÇÃO FINAL ---
+    // --- 3. BOTONES Y ACCIÓN FINAL ---
 
     Button btnCancel = new Button("Cancelar", e -> dialog.close());
 
@@ -206,34 +212,34 @@ public class AdminCajaView extends VerticalLayout implements RouteGuard {
     btnConfirm.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SUCCESS);
     btnConfirm.addClickShortcut(Key.ENTER);
 
-    // A Lógica do Clique
+    // La lógica del clic
     btnConfirm.addClickListener(e -> {
       BigDecimal received = receivedField.getValue();
       BigDecimal total = order.getTotal();
 
-      // Validação de valor
+      // Validación del monto
       if (received == null || received.compareTo(total) < 0) {
-        Notification.show("Monto insuficiente", 3000, Notification.Position.MIDDLE)
+        Notification.show("El monto recibido es insuficiente", 3000, Notification.Position.MIDDLE)
                 .addThemeVariants(NotificationVariant.LUMO_ERROR);
         return;
       }
 
-      // Validação do Email e criação da variável 'emailToSend'
-      String emailToSend = null; // Começa nulo
+      // Validación del correo y creación de la variable 'emailToSend'
+      String emailToSend = null; // Comienza nulo
 
       if (sendReceiptCheck.getValue()) {
-        // Se marcou o checkbox, validamos o campo
+        // Si marcó el checkbox, validamos el campo
         if (emailField.isEmpty() || emailField.isInvalid()) {
-          Notification.show("Por favor, escriba un correo válido", 3000, Notification.Position.MIDDLE)
+          Notification.show("Por favor, ingrese un correo válido", 3000, Notification.Position.MIDDLE)
                   .addThemeVariants(NotificationVariant.LUMO_ERROR);
           return; // Para tudo se o email estiver errado
         }
-        // Se tudo ok, pega o valor
+        // Si todo está bien, obtenemos el valor
         emailToSend = emailField.getValue();
       }
 
       try {
-        // Agora 'emailToSend' existe e pode ser passado
+        // Ahora 'emailToSend' existe y puede ser pasado
         orderService.processPayment(
                 order.getId(),
                 methodSelect.getValue(),
@@ -242,20 +248,20 @@ public class AdminCajaView extends VerticalLayout implements RouteGuard {
                 emailToSend
         );
 
-        Notification.show("Pago realizado con éxito!", 3000, Notification.Position.TOP_END)
+        Notification.show("¡Pago realizado con éxito!", 3000, Notification.Position.TOP_END)
                 .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
 
         dialog.close();
         refreshCards();
 
       } catch (Exception ex) {
-        Notification.show("Error: " + ex.getMessage(), 5000, Notification.Position.TOP_END)
+        Notification.show("Error al procesar el pago: " + ex.getMessage(), 5000, Notification.Position.TOP_END)
                 .addThemeVariants(NotificationVariant.LUMO_ERROR);
         ex.printStackTrace();
       }
     });
 
-    // --- 4. MONTAGEM DO LAYOUT ---
+    // --- 4. MONTAJE DEL LAYOUT ---
     VerticalLayout layout = new VerticalLayout(
             totalDisplay,
             methodSelect,
