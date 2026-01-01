@@ -1102,17 +1102,14 @@ vaadin-app-layout nav a.active-link {
   max-width: 100%;
   box-sizing: border-box;
 }
-/* =========================================================
-   ✅ COMPACT TOP SPACING (CrearOrdenView + AppLayout)
-   - Sube todo visualmente
-   - Reduce espacio entre hamburguesa y título
-   Pegar AL FINAL del CSS
-   ========================================================= */
 
-/* 1) No centres las vistas globalmente (eso genera "aire" lateral/vertical) */
-[class$="-view"] {
+
+.ue-order-view,
+.mesas-view,
+.cocina-view {
   align-items: stretch !important;
 }
+
 
 /* 2) Quita el padding/gap gigante SOLO en la vista de orden */
 .ue-order-view {
