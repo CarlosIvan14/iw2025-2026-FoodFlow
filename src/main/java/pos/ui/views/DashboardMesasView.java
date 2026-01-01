@@ -61,7 +61,6 @@ public class DashboardMesasView extends VerticalLayout implements RouteGuard {
         header.add(addBtn);
       }
     } catch (Exception e) {
-      // Si hay error al verificar el rol, no mostrar el botón
       System.err.println("Error checking admin role: " + e.getMessage());
     }
 
@@ -185,7 +184,7 @@ public class DashboardMesasView extends VerticalLayout implements RouteGuard {
           .y(0)
           .state(pos.domain.TableState.FREE)
           .build();
-  
+
       tables.save(t);
       dialog.close();
       com.vaadin.flow.component.UI.getCurrent().getPage().reload();
@@ -229,8 +228,8 @@ public class DashboardMesasView extends VerticalLayout implements RouteGuard {
     }
 
     dialog.add(wrap);
-    dialog.setWidth("560px");      // 👈 fijo para que no se vea “gigante”
-    dialog.setMaxWidth("92vw");    // responsive
+    dialog.setWidth("560px");
+    dialog.setMaxWidth("92vw");
     dialog.setModal(true);
     dialog.setCloseOnOutsideClick(true);
     dialog.open();
@@ -259,7 +258,6 @@ public class DashboardMesasView extends VerticalLayout implements RouteGuard {
     var actions = new Div();
     actions.addClassName("pedido-actions");
 
-    // Ver más (AZUL + icono ojo)
     var viewBtn = new Button("Ver más", new Icon(VaadinIcon.EYE));
     viewBtn.addClassName("pedido-action-btn");
     viewBtn.addClassName("pedido-btn-view");
@@ -267,7 +265,6 @@ public class DashboardMesasView extends VerticalLayout implements RouteGuard {
     viewBtn.addClickListener(e -> showOrderDetails(o, orders, parentDialog));
     actions.add(viewBtn);
 
-    // Editar / Agregar más (VERDE, icon-only)
     Button addMoreBtn = null;
     String userRole = authService.currentRole();
     if ((userRole == null || (!userRole.equals("CAJERO") && !userRole.equals("COCINERO")))
@@ -289,7 +286,6 @@ public class DashboardMesasView extends VerticalLayout implements RouteGuard {
       actions.add(addMoreBtn);
     }
 
-    // Cancelar (solo PENDING)
     if (o.getStatus() == OrderStatus.PENDING) {
       var cancelBtn = new Button("Cancelar", new Icon(VaadinIcon.TRASH));
       cancelBtn.addClassName("pedido-action-btn");
@@ -308,7 +304,6 @@ public class DashboardMesasView extends VerticalLayout implements RouteGuard {
       actions.add(cancelBtn);
     }
 
-    // Pagado (solo LISTO)
     if (o.getStatus() == OrderStatus.LISTO
         && (userRole == null || (!userRole.equals("COCINERO")))) {
       var paidBtn = new Button("Pagado", new Icon(VaadinIcon.CREDIT_CARD));
@@ -332,26 +327,44 @@ public class DashboardMesasView extends VerticalLayout implements RouteGuard {
     return card;
   }
 
+  /**
+   * ✅ MODAL "VER MÁS" arreglado:
+   * - Shell (flex column) que llena todo y NO tiene bordes redondeados internos
+   * - Body blanco
+   * - Footer blanco pegado al borde (sin redondeos internos) para que NO se vean esquinas grises
+   */
   private void showOrderDetails(Order o, OrderService orders, Dialog parentDialog) {
     var detailDialog = new Dialog();
+    detailDialog.addClassName("pedido-detail-dialog");
     detailDialog.setHeaderTitle("Detalles de Pedido #" + o.getId());
 
-    var content = new VerticalLayout();
-    content.setPadding(true);
-    content.setSpacing(true);
+    var closeX = new Button(new Icon(VaadinIcon.CLOSE));
+    closeX.addThemeVariants(ButtonVariant.LUMO_TERTIARY_INLINE);
+    closeX.addClassName("pedido-detail-close-x");
+    closeX.addClickListener(e -> detailDialog.close());
+    detailDialog.getHeader().add(closeX);
 
-    var infoDiv = new Div();
-    infoDiv.addClassName("pedido-info");
+    // Shell: columna (body + footer)
+    var shell = new Div();
+    shell.addClassName("pedido-detail-shell");
 
-    var statusText = new Div("Estado: " + getStatusText(o.getStatus()));
-    var totalText = new Div("Total: €" + String.format("%.2f", o.getTotal()));
-    var createdText = new Div("Creado: " + (o.getCreatedAt() != null ? o.getCreatedAt() : "—"));
+    // Body (scroll si hace falta)
+    var body = new Div();
+    body.addClassName("pedido-detail-content");
 
-    infoDiv.add(statusText, totalText, createdText);
-    content.add(infoDiv);
+    // Resumen (grid)
+    var summary = new Div();
+    summary.addClassName("pedido-summary");
+    summary.add(
+        summaryRow("Estado", getStatusText(o.getStatus())),
+        summaryRow("Total", "€" + String.format("%.2f", o.getTotal())),
+        summaryRow("Creado", (o.getCreatedAt() != null ? String.valueOf(o.getCreatedAt()) : "—"))
+    );
+    body.add(summary);
 
     var itemsTitle = new H2("Items del Pedido");
-    content.add(itemsTitle);
+    itemsTitle.addClassName("pedido-items-title");
+    body.add(itemsTitle);
 
     var itemsList = new Div();
     itemsList.addClassName("pedido-items-list");
@@ -361,35 +374,48 @@ public class DashboardMesasView extends VerticalLayout implements RouteGuard {
       var items = tryGetItems(fullOrder);
 
       if (items == null || items.isEmpty()) {
-        itemsList.add(new Span("Sin items en este pedido"));
+        var empty = new Div(new Span("Sin items en este pedido"));
+        empty.addClassName("pedido-items-empty");
+        itemsList.add(empty);
       } else {
         for (Object item : items) {
-          var itemRow = buildOrderItemRow(item);
-          itemsList.add(itemRow);
+          itemsList.add(buildOrderItemRow(item));
         }
       }
     } catch (Exception e) {
       var errorMsg = new Div();
       errorMsg.addClassName("pedido-items-error");
       errorMsg.add(new Span("No se pudieron cargar los items en este momento."));
-      var info = new Div("Total del pedido: €" + String.format("%.2f", o.getTotal()));
-      info.getStyle().set("margin-top", "8px");
-      info.getStyle().set("font-weight", "bold");
-      errorMsg.add(info);
       itemsList.add(errorMsg);
       e.printStackTrace();
     }
 
-    content.add(itemsList);
+    body.add(itemsList);
+
+    // Footer pegado al borde (sin redondeo interno)
+    var footer = new Div();
+    footer.addClassName("pedido-detail-footer");
 
     var closeBtn = new Button("Cerrar", e -> detailDialog.close());
     closeBtn.addClassName("pedido-detail-close-btn");
-    content.add(closeBtn);
+    closeBtn.setWidthFull();
+    footer.add(closeBtn);
 
-    detailDialog.add(content);
-    detailDialog.setWidth("600px");
-    detailDialog.setMaxHeight("80vh");
+    shell.add(body, footer);
+
+    detailDialog.add(shell);
+    detailDialog.setWidth("640px");
+    detailDialog.setMaxWidth("94vw");
+    detailDialog.setModal(true);
+    detailDialog.setCloseOnOutsideClick(true);
     detailDialog.open();
+  }
+
+  private Div summaryRow(String label, String value) {
+    var row = new Div();
+    row.addClassName("pedido-summary-row");
+    row.add(new Span(label), new Span(value));
+    return row;
   }
 
   @SuppressWarnings("unchecked")

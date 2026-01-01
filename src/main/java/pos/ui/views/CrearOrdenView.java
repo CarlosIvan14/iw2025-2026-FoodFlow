@@ -1,8 +1,10 @@
+// src/main/java/pos/ui/views/CrearOrdenView.java
 package pos.ui.views;
 
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.html.*;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
@@ -13,7 +15,6 @@ import com.vaadin.flow.component.orderedlayout.Scroller;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.IntegerField;
 import com.vaadin.flow.component.textfield.TextField;
-import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.VaadinSession;
@@ -61,6 +62,12 @@ public class CrearOrdenView extends VerticalLayout implements RouteGuard {
   private final Map<Long, Button> tableButtonsById = new HashMap<>();
   private Button btnCreate; // Referencia al botón de confirmar
 
+  // Tabs UI (solo cliente)
+  private Div orderTypePanelTables;
+  private Div orderTypePanelCarry;
+  private Button tabSucursal;
+  private Button tabCarry;
+
   public CrearOrdenView(TableService tables, MenuService menu, OrderService orders, AuthService auth) {
     this.auth = auth;
     addClassName("ue-order-view");
@@ -76,41 +83,41 @@ public class CrearOrdenView extends VerticalLayout implements RouteGuard {
     var session = VaadinSession.getCurrent();
     var sessionEditingOrderId = session.getAttribute("editingOrderId");
     var sessionEditingTableId = session.getAttribute("editingTableId");
-    
+
     boolean isEditingMode = sessionEditingOrderId != null && sessionEditingTableId != null;
-    
+
     if (isEditingMode) {
       editingOrderId = ((Number) sessionEditingOrderId).longValue();
       Long tableId = ((Number) sessionEditingTableId).longValue();
-      
+
       try {
         // Cargar el pedido con items
         Order existingOrder = orders.getOrderWithItemsInitialized(editingOrderId);
-        
+
         // Cargar la mesa
         TableSpot table = tables.all().stream()
             .filter(t -> Objects.equals(t.getId(), tableId))
             .findFirst()
             .orElse(null);
-        
+
         if (table != null) {
           selectedTable = table;
         }
-        
+
         // Cargar items del pedido
         var orderItems = tryGetItems(existingOrder);
         if (orderItems != null) {
           items.addAll((java.util.Collection<? extends OrderItem>) orderItems);
         }
-        
+
         pageTitle.setText("Editar Pedido - Mesa " + (table != null ? table.getCode() : "?"));
-        
+
       } catch (Exception e) {
         Notification.show("Error al cargar pedido: " + e.getMessage(), 3000, Notification.Position.TOP_CENTER)
             .addThemeVariants(NotificationVariant.LUMO_ERROR);
         e.printStackTrace();
       }
-      
+
       // Limpiar la sesión
       session.setAttribute("editingOrderId", null);
       session.setAttribute("editingTableId", null);
@@ -140,20 +147,22 @@ public class CrearOrdenView extends VerticalLayout implements RouteGuard {
     left.setSpacing(true);
     left.setSizeFull();
 
-    // Mostrar mesas siempre (para mesero con info completa, para cliente simplificado)
+    // Sección mesas
     var tablesSection = buildTablesSection(tables, orders);
-    left.add(tablesSection);
 
-    // Si es cliente, mostrar también opción "Para llevar"
+    // Cliente: tabs tipo Chrome (Sucursal vs Para llevar)
     if (isClientMode) {
       var carryOutSection = buildCarryOutSection();
-      left.add(carryOutSection);
+      left.add(buildOrderTypeTabs(tablesSection, carryOutSection));
+    } else {
+      left.add(tablesSection);
     }
 
+    // Productos siempre
     var productsSection = buildProductsSection(menu);
     left.add(productsSection);
 
-    // Columna derecha: carrito (más angosto por CSS)
+    // Columna derecha: carrito
     var right = buildCartSection(orders, auth);
 
     content.add(left, right);
@@ -183,7 +192,69 @@ public class CrearOrdenView extends VerticalLayout implements RouteGuard {
   }
 
   /* =========================
-     SECTION: MESAS (GRID 4 COL)
+     TABS TIPO CHROME (CLIENTE)
+     ========================= */
+  private Component buildOrderTypeTabs(Component tablesSection, Component carryOutSection) {
+    var wrap = new Div();
+    wrap.addClassName("ue-ordertypes");
+
+    var tabs = new Div();
+    tabs.addClassName("ue-tabs");
+
+    tabSucursal = new Button("En sucursal");
+    tabSucursal.addClassName("ue-tab-btn");
+
+    tabCarry = new Button("Para llevar");
+    tabCarry.addClassName("ue-tab-btn");
+
+    tabSucursal.addClickListener(e -> setActiveOrderType(false));
+    tabCarry.addClickListener(e -> setActiveOrderType(true));
+
+    tabs.add(tabSucursal, tabCarry);
+
+    orderTypePanelTables = new Div(tablesSection);
+    orderTypePanelTables.addClassName("ue-tab-panel");
+    orderTypePanelTables.addClassName("ue-tab-panel--tables");
+
+    orderTypePanelCarry = new Div(carryOutSection);
+    orderTypePanelCarry.addClassName("ue-tab-panel");
+    orderTypePanelCarry.addClassName("ue-tab-panel--carry");
+
+    wrap.add(tabs, orderTypePanelTables, orderTypePanelCarry);
+
+    // Default: En sucursal
+    setActiveOrderType(false);
+
+    return wrap;
+  }
+
+  private void setActiveOrderType(boolean carryOut) {
+    isForCarryOut = carryOut;
+
+    // UI tab active
+    if (!carryOut) {
+      tabSucursal.addClassName("ue-tab-active");
+      tabCarry.removeClassName("ue-tab-active");
+    } else {
+      tabCarry.addClassName("ue-tab-active");
+      tabSucursal.removeClassName("ue-tab-active");
+    }
+
+    // Show/hide panels
+    orderTypePanelTables.getStyle().set("display", carryOut ? "none" : "block");
+    orderTypePanelCarry.getStyle().set("display", carryOut ? "block" : "none");
+
+    // Estado de selección
+    if (carryOut) {
+      selectedTable = null; // carry-out no usa mesa
+    }
+
+    updateSelectedTableLabel();
+    refreshCart(); // para habilitar/deshabilitar Confirmar según tab + items
+  }
+
+  /* =========================
+     SECTION: MESAS
      ========================= */
   private Component buildTablesSection(TableService tables, OrderService orders) {
     var section = new Div();
@@ -206,7 +277,6 @@ public class CrearOrdenView extends VerticalLayout implements RouteGuard {
 
     top.add(h, selectedTableLabel, refreshBtn);
 
-    // IMPORTANTE: ahora es grid responsive 4 columnas (CSS)
     tableCanvas.addClassName("ue-table-grid");
 
     var canvasWrap = new Div(tableCanvas);
@@ -241,37 +311,38 @@ public class CrearOrdenView extends VerticalLayout implements RouteGuard {
     var btn = new Button();
     btn.addClassName("mesa-btn");
 
-    // Verificar si la mesa tiene pedidos activos (no PAGADO)
+    // pedidos activos (no PAGADO)
     List<Order> activeOrders = orders.findActiveOrdersByTable(t.getId());
     boolean hasActiveOrders = !activeOrders.isEmpty();
-    
-    // Para clientes, mostrar versión simplificada (solo libre/ocupada)
+
+    // modo cliente
     String userRole = auth.currentRole();
     boolean isClientMode = userRole != null && (userRole.equalsIgnoreCase("CLIENTE") || userRole.equalsIgnoreCase("CLIENT"));
-    
+
     if (isClientMode) {
-      // Versión simplificada para cliente
+      // Si está en carry-out, el mapa puede verse pero no es necesario bloquear;
+      // igual dejamos seleccionar cuando tab sucursal esté activo.
       String statusClass = hasActiveOrders ? "mesa-ocupada" : "mesa-libre";
       btn.addClassName(statusClass);
-      
+
       if (hasActiveOrders) {
         btn.setEnabled(false);
         btn.addClassName("mesa-bloqueada");
         btn.getElement().setAttribute("title", "Mesa ocupada");
       }
-      
+
       btn.getElement().setProperty("innerHTML",
           "<img src='icons/mesa.png' class='mesa-icon'>" +
               "<span class='mesa-label'>" + t.getCode() + "</span>"
       );
     } else {
-      // Versión completa para mesero/admin
+      // versión completa mesero/admin
       String statusClass = getTableStatusClass(t, orders);
       String statusBadge = getTableStatusBadge(t, orders);
-      
+
       btn.addClassName(statusClass);
-      
-      // Si estamos en modo edición, deshabilitar todas las mesas excepto la seleccionada
+
+      // modo edición: bloquear cambio de mesa
       if (editingOrderId != null) {
         if (selectedTable == null || !Objects.equals(selectedTable.getId(), t.getId())) {
           btn.setEnabled(false);
@@ -283,7 +354,7 @@ public class CrearOrdenView extends VerticalLayout implements RouteGuard {
         btn.addClassName("mesa-bloqueada");
         btn.getElement().setAttribute("title", "Mesa con pedido activo: no disponible");
       }
-      
+
       btn.getElement().setProperty("innerHTML",
           "<img src='icons/mesa.png' class='mesa-icon'>" +
               "<span class='mesa-label'>" + t.getCode() + "</span>" +
@@ -292,10 +363,13 @@ public class CrearOrdenView extends VerticalLayout implements RouteGuard {
     }
 
     btn.addClickListener(e -> {
-      // si está deshabilitado, no hacemos nada
       if (!btn.isEnabled()) return;
 
-      // desmarcar anterior
+      // cliente: si está en tab carry-out, no seleccionar mesa
+      String role = auth.currentRole();
+      boolean client = role != null && (role.equalsIgnoreCase("CLIENTE") || role.equalsIgnoreCase("CLIENT"));
+      if (client && isForCarryOut) return;
+
       if (selectedTable != null && tableButtonsById.containsKey(selectedTable.getId())) {
         tableButtonsById.get(selectedTable.getId()).removeClassName("mesa-selected");
       }
@@ -303,6 +377,7 @@ public class CrearOrdenView extends VerticalLayout implements RouteGuard {
       selectedTable = t;
       btn.addClassName("mesa-selected");
       updateSelectedTableLabel();
+      refreshCart();
 
       Notification.show("Mesa seleccionada: " + t.getCode(), 1200, Notification.Position.BOTTOM_START)
           .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
@@ -314,35 +389,37 @@ public class CrearOrdenView extends VerticalLayout implements RouteGuard {
   private void updateSelectedTableLabel() {
     String userRole = auth.currentRole();
     boolean isClientMode = userRole != null && (userRole.equalsIgnoreCase("CLIENTE") || userRole.equalsIgnoreCase("CLIENT"));
-    
+
     if (isClientMode) {
       if (isForCarryOut) {
         selectedTableLabel.setText("Para llevar");
         selectedTableLabel.getElement().getThemeList().add("badge");
-        if (btnCreate != null && !items.isEmpty()) {
-          btnCreate.setEnabled(true);
-        }
       } else {
-        selectedTableLabel.setText("Selecciona tipo de pedido");
-        selectedTableLabel.getElement().getThemeList().remove("badge");
-        if (btnCreate != null) {
-          btnCreate.setEnabled(false);
+        if (selectedTable == null) {
+          selectedTableLabel.setText("Selecciona una mesa");
+          selectedTableLabel.getElement().getThemeList().remove("badge");
+        } else {
+          selectedTableLabel.setText("Mesa: " + selectedTable.getCode());
+          selectedTableLabel.getElement().getThemeList().add("badge");
         }
       }
+
+      if (btnCreate != null) {
+        boolean ok = !items.isEmpty() && (isForCarryOut || selectedTable != null);
+        btnCreate.setEnabled(ok);
+      }
+      return;
+    }
+
+    // mesero/admin
+    if (selectedTable == null) {
+      selectedTableLabel.setText("Sin mesa seleccionada");
+      selectedTableLabel.getElement().getThemeList().remove("badge");
+      if (btnCreate != null) btnCreate.setEnabled(false);
     } else {
-      if (selectedTable == null) {
-        selectedTableLabel.setText("Sin mesa seleccionada");
-        selectedTableLabel.getElement().getThemeList().remove("badge");
-        if (btnCreate != null) {
-          btnCreate.setEnabled(false); // Deshabilitar botón si no hay mesa
-        }
-      } else {
-        selectedTableLabel.setText("Asignando a: " + selectedTable.getCode());
-        selectedTableLabel.getElement().getThemeList().add("badge");
-        if (btnCreate != null && !items.isEmpty()) {
-          btnCreate.setEnabled(true); // Habilitar si hay mesa y hay items
-        }
-      }
+      selectedTableLabel.setText("Asignando a: " + selectedTable.getCode());
+      selectedTableLabel.getElement().getThemeList().add("badge");
+      if (btnCreate != null && !items.isEmpty()) btnCreate.setEnabled(true);
     }
   }
 
@@ -381,7 +458,6 @@ public class CrearOrdenView extends VerticalLayout implements RouteGuard {
     if (hasInPreparation) return "mesa-cocina";
     if (hasPending) return "mesa-pendiente";
     if (hasPagado) return "mesa-pagado";
-
     return "mesa-ocupada";
   }
 
@@ -416,21 +492,14 @@ public class CrearOrdenView extends VerticalLayout implements RouteGuard {
     var h = new H3("Tipo de Pedido");
     h.addClassName("ue-section-title");
 
-    // Botón Para Llevar
     var carryOutBtn = new Button("🛍️ Para Llevar");
     carryOutBtn.addClassName("carry-out-btn");
     carryOutBtn.setWidthFull();
-    carryOutBtn.addThemeVariants(
-        isForCarryOut ? ButtonVariant.LUMO_PRIMARY : ButtonVariant.LUMO_TERTIARY,
-        ButtonVariant.LUMO_SUCCESS
-    );
 
+    // OJO: ya no cambiamos el estado aquí, porque lo controla el TAB.
     carryOutBtn.addClickListener(e -> {
-      isForCarryOut = true;
-      selectedTable = null;
-      updateSelectedTableLabel();
-      carryOutBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-      carryOutBtn.removeThemeVariants(ButtonVariant.LUMO_TERTIARY);
+      // por si alguien lo presiona, activamos el tab carry-out también
+      setActiveOrderType(true);
       Notification.show("Pedido para llevar", 1200, Notification.Position.BOTTOM_START)
           .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
     });
@@ -447,7 +516,7 @@ public class CrearOrdenView extends VerticalLayout implements RouteGuard {
   }
 
   /* =========================
-     SECTION: PRODUCTOS (CARD + SEARCH + SCROLL)
+     SECTION: PRODUCTOS
      ========================= */
   private Component buildProductsSection(MenuService menu) {
     var section = new Div();
@@ -458,7 +527,6 @@ public class CrearOrdenView extends VerticalLayout implements RouteGuard {
 
     var h = new H3("Productos");
     h.addClassName("ue-section-title");
-
     top.add(h);
 
     var search = new TextField();
@@ -478,7 +546,6 @@ public class CrearOrdenView extends VerticalLayout implements RouteGuard {
       String q = e.getValue() == null ? "" : e.getValue().trim().toLowerCase();
       List<Product> all = menu.list();
 
-      // SOLO por nombre (como pediste)
       List<Product> filtered = all.stream()
           .filter(p -> p.getName() != null && p.getName().toLowerCase().contains(q))
           .collect(Collectors.toList());
@@ -526,7 +593,6 @@ public class CrearOrdenView extends VerticalLayout implements RouteGuard {
     var info = new Div(name, desc, price);
     info.addClassName("ue-product-info");
 
-    // botón +1 (solo agrega 1)
     var addBtn = new Button(new Icon(VaadinIcon.PLUS));
     addBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
     addBtn.addClassName("ue-product-add");
@@ -546,7 +612,7 @@ public class CrearOrdenView extends VerticalLayout implements RouteGuard {
       if (it.getProduct() != null && it.getProduct().getId() != null
           && p.getId() != null && Objects.equals(it.getProduct().getId(), p.getId())) {
 
-        it.setQuantity(it.getQuantity() + qty); // +1 siempre
+        it.setQuantity(it.getQuantity() + qty);
         if (note != null && !note.isBlank()) it.setComment(note);
         refreshCart();
         return;
@@ -566,7 +632,7 @@ public class CrearOrdenView extends VerticalLayout implements RouteGuard {
   }
 
   /* =========================
-     SECTION: CARRITO (20% EN DESKTOP)
+     SECTION: CARRITO
      ========================= */
   private Component buildCartSection(OrderService orders, AuthService auth) {
     var right = new VerticalLayout();
@@ -581,7 +647,6 @@ public class CrearOrdenView extends VerticalLayout implements RouteGuard {
     var h = new H3("Carrito");
     h.addClassName("ue-section-title");
     h.getStyle().set("margin", "0");
-
     header.add(h);
 
     cartList.addClassName("ue-cart-list");
@@ -590,23 +655,20 @@ public class CrearOrdenView extends VerticalLayout implements RouteGuard {
     scroller.addClassName("ue-cart-scroller");
     scroller.setScrollDirection(Scroller.ScrollDirection.VERTICAL);
 
-    // Totales
     var totals = new Div();
     totals.addClassName("ue-cart-totals");
 
     var totalRow = new Div(new Span("Total"), cartTotal);
     totalRow.addClassName("ue-cart-total-row");
-
     totals.add(totalRow);
 
-    // Botones
     btnCreate = new Button(
         editingOrderId != null ? "Guardar Cambios" : "Confirmar Pedido",
         new Icon(VaadinIcon.CHECK_CIRCLE)
     );
     btnCreate.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SUCCESS);
     btnCreate.setWidthFull();
-    btnCreate.setEnabled(false); // Deshabilitado por defecto hasta seleccionar mesa
+    btnCreate.setEnabled(false);
 
     var btnCancel = new Button("Cancelar", new Icon(VaadinIcon.CLOSE_CIRCLE));
     btnCancel.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_ERROR);
@@ -619,41 +681,38 @@ public class CrearOrdenView extends VerticalLayout implements RouteGuard {
     });
 
     btnCreate.addClickListener(e -> {
-      // Para cliente: puede seleccionar mesa O "Para llevar"
-      String userRole = auth.currentRole();
-      boolean isClientMode = userRole != null && (userRole.equalsIgnoreCase("CLIENTE") || userRole.equalsIgnoreCase("CLIENT"));
-      
-      if (isClientMode && selectedTable == null && !isForCarryOut) {
-        Notification.show("⚠ Selecciona una mesa o 'Para Llevar'", 2500, Notification.Position.MIDDLE)
-            .addThemeVariants(NotificationVariant.LUMO_ERROR);
-        return;
-      }
-      
-      // Para mesero, necesita mesa seleccionada
-      if (!isClientMode && selectedTable == null) {
-        Notification.show("⚠ Selecciona una mesa", 2500, Notification.Position.MIDDLE)
-            .addThemeVariants(NotificationVariant.LUMO_ERROR);
-        return;
-      }
-      
+      String role = auth.currentRole();
+      boolean isClientMode = role != null && (role.equalsIgnoreCase("CLIENTE") || role.equalsIgnoreCase("CLIENT"));
+
       if (items.isEmpty()) {
         Notification.show("⚠ Agrega productos", 2500, Notification.Position.MIDDLE)
             .addThemeVariants(NotificationVariant.LUMO_ERROR);
         return;
       }
 
+      if (isClientMode) {
+        if (!isForCarryOut && selectedTable == null) {
+          Notification.show("⚠ Selecciona una mesa o elige 'Para llevar'", 2500, Notification.Position.MIDDLE)
+              .addThemeVariants(NotificationVariant.LUMO_ERROR);
+          return;
+        }
+      } else {
+        if (selectedTable == null) {
+          Notification.show("⚠ Selecciona una mesa", 2500, Notification.Position.MIDDLE)
+              .addThemeVariants(NotificationVariant.LUMO_ERROR);
+          return;
+        }
+      }
+
       try {
         if (editingOrderId != null) {
-          // Modo edición: agregar items al pedido existente
           orders.addItemsToOrder(editingOrderId, items);
-          
+
           Notification.show("Items agregados al pedido", 3000, Notification.Position.TOP_CENTER)
               .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
-          
-          // Navegar de vuelta a mesas
+
           com.vaadin.flow.component.UI.getCurrent().navigate("mesas");
         } else if (isClientMode && isForCarryOut) {
-          // Cliente: crear pedido sin mesa (para llevar)
           orders.createCarryOutOrder(items, auth.currentUserId());
 
           Notification.show("¡Pedido creado! Recógelo en caja", 3000, Notification.Position.TOP_CENTER)
@@ -662,8 +721,12 @@ public class CrearOrdenView extends VerticalLayout implements RouteGuard {
           items.clear();
           isForCarryOut = false;
           refreshCart();
+
+          // por UX: regresa al tab sucursal (opcional)
+          if (tabSucursal != null && tabCarry != null) {
+            setActiveOrderType(false);
+          }
         } else {
-          // Crear pedido con mesa (mesero o cliente en mesa)
           orders.createTableOrder(selectedTable.getId(), items, auth.currentUserId());
 
           String tableCode = selectedTable != null ? selectedTable.getCode() : "mesa";
@@ -700,9 +763,7 @@ public class CrearOrdenView extends VerticalLayout implements RouteGuard {
       empty.addClassName("ue-cart-empty");
       cartList.add(empty);
       cartTotal.setText("€ 0.00");
-      if (btnCreate != null) {
-        btnCreate.setEnabled(false); // Deshabilitar si no hay items
-      }
+      if (btnCreate != null) btnCreate.setEnabled(false);
       return;
     }
 
@@ -718,10 +779,16 @@ public class CrearOrdenView extends VerticalLayout implements RouteGuard {
         .sum();
 
     cartTotal.setText(String.format("€ %.2f", total));
-    
-    // Habilitar botón si hay items Y hay mesa seleccionada
-    if (btnCreate != null && selectedTable != null) {
-      btnCreate.setEnabled(true);
+
+    if (btnCreate != null) {
+      String role = auth.currentRole();
+      boolean isClientMode = role != null && (role.equalsIgnoreCase("CLIENTE") || role.equalsIgnoreCase("CLIENT"));
+
+      if (isClientMode) {
+        btnCreate.setEnabled(!items.isEmpty() && (isForCarryOut || selectedTable != null));
+      } else {
+        btnCreate.setEnabled(!items.isEmpty() && selectedTable != null);
+      }
     }
   }
 
@@ -809,8 +876,8 @@ public class CrearOrdenView extends VerticalLayout implements RouteGuard {
           return (java.util.Collection<?>) m.invoke(o);
         } catch (Exception e3) {
           return null;
-          }
         }
       }
     }
   }
+}
