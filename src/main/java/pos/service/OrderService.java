@@ -80,7 +80,7 @@ public class OrderService {
 
             int qty = item.getQuantity();
             if (dbProduct.getStock() < qty) {
-                throw new RuntimeException("Estoque insuficiente para: " + dbProduct.getName());
+                throw new RuntimeException("Stock insuficiente para: " + dbProduct.getName());
             }
 
             dbProduct.setStock(dbProduct.getStock() - qty);
@@ -135,7 +135,7 @@ public class OrderService {
             int quantityToSell = item.getQuantity();
 
             if (dbProduct.getStock() < quantityToSell) {
-                throw new RuntimeException("Estoque insuficiente para: " + dbProduct.getName()
+                throw new RuntimeException("Stock insuficiente para: " + dbProduct.getName()
                         + ". Disponível: " + dbProduct.getStock() + ", Solicitado: " + quantityToSell);
             }
 
@@ -146,7 +146,7 @@ public class OrderService {
                     .product(dbProduct)
                     .quantity(quantityToSell)
                     .movementType(MovementType.EXIT)
-                    .note("Venda Mesa " + tableId + " - Pedido (pendiente de ID)")
+                    .note("Venta Mesa " + tableId + " - Pedido (pendiente de ID)")
                     .build();
 
             inventoryMovementRepository.save(movement);
@@ -156,13 +156,32 @@ public class OrderService {
 
         Order savedOrder = orderRepository.save(order);
 
-        log.info("Pedido criado com sucesso: ID {}", savedOrder.getId());
+        log.info("Pedido creado exitosamente: ID {}", savedOrder.getId());
         return savedOrder;
     }
 
     // ✅ Usa findKitchenQueue() que ya carga todo
     public List<Order> kitchenQueue() {
         return orderRepository.findKitchenQueue();
+    }
+
+    /**
+     * Carga la cola de cocina con items inicializados (evita LazyInitializationException)
+     */
+    @Transactional(readOnly = true)
+    public List<Order> kitchenQueueWithItems() {
+        List<Order> orders = orderRepository.findKitchenQueue();
+        
+        // Materializar items dentro de la transacción
+        for (Order order : orders) {
+            if (order.getItems() != null) {
+                // Crear una nueva ArrayList para materializar la lista lazy de Hibernate
+                List<OrderItem> materialized = new java.util.ArrayList<>(order.getItems());
+                order.setItems(materialized);
+            }
+        }
+        
+        return orders;
     }
 
     public List<Order> all() {
@@ -248,11 +267,11 @@ public class OrderService {
                 emailService.sendReceiptWithPdf(customerEmail, pdfBytes, orderId);
                 log.info("Processo de envio de recibo iniciado para: {}", customerEmail);
             } catch (Exception e) {
-                log.error("Erro ao tentar enviar recibo por e-mail", e);
+                log.error("Error al intentar enviar recibo por correo", e);
             }
         }
 
-        log.info("Pago procesado con éxito. Venda ID: {}, Pago ID: {}", sale.getId(), payment.getId());
+        log.info("Pago procesado con éxito. Venta ID: {}, Pago ID: {}", sale.getId(), payment.getId());
     }
 
     public List<Order> findActiveOrdersByTable(Long tableId) {
@@ -303,7 +322,7 @@ public class OrderService {
 
             // Verificar stock
             if (dbProduct.getStock() < quantityToAdd) {
-                throw new RuntimeException("Estoque insuficiente para: " + dbProduct.getName()
+                throw new RuntimeException("Stock insuficiente para: " + dbProduct.getName()
                         + ". Disponível: " + dbProduct.getStock() + ", Solicitado: " + quantityToAdd);
             }
 
@@ -376,6 +395,8 @@ public class OrderService {
                     .orElseThrow(() -> new EntityNotFoundException("Producto no encontrado ID: " + prodId));
 
             item.setProduct(dbProduct);
+            item.setProductName(dbProduct.getName());
+            item.setUnitPrice(dbProduct.getPrice());
 
             int quantityToSell = item.getQuantity();
 
@@ -397,6 +418,7 @@ public class OrderService {
             inventoryMovementRepository.save(movement);
         }
 
+        order.setItems(items);
         Order saved = orderRepository.save(order);
         log.info("Pedido para llevar creado #{}. Usuario: {}. Total: {}", saved.getId(), user.getEmail(), total);
 
@@ -412,6 +434,32 @@ public class OrderService {
             return orderRepository.findAll().stream()
                     .filter(o -> o.getCustomer() != null && o.getCustomer().getId() != null && o.getCustomer().getId().equals(id))
                     .toList();
+        } catch (NumberFormatException e) {
+            return List.of();
+        }
+    }
+
+    /**
+     * Buscar pedidos de un usuario con items inicializados (evita LazyInitializationException)
+     */
+    @Transactional(readOnly = true)
+    public List<Order> findOrdersByUserIdWithItems(String userId) {
+        try {
+            Long id = Long.parseLong(userId);
+            List<Order> orders = orderRepository.findAll().stream()
+                    .filter(o -> o.getCustomer() != null && o.getCustomer().getId() != null && o.getCustomer().getId().equals(id))
+                    .toList();
+            
+            // Materializar items dentro de la transacción
+            for (Order order : orders) {
+                if (order.getItems() != null) {
+                    // Crear una nueva ArrayList para materializar la lista lazy de Hibernate
+                    List<OrderItem> materialized = new java.util.ArrayList<>(order.getItems());
+                    order.setItems(materialized);
+                }
+            }
+            
+            return orders;
         } catch (NumberFormatException e) {
             return List.of();
         }

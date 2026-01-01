@@ -77,7 +77,7 @@ public class ClientePedidosView extends VerticalLayout implements RouteGuard {
 
     try {
       Long clientId = authService.currentUserId();
-      List<Order> clientOrders = orderService.findOrdersByUserId(clientId.toString());
+      List<Order> clientOrders = orderService.findOrdersByUserIdWithItems(clientId.toString());
 
       if (clientOrders == null || clientOrders.isEmpty()) {
         var empty = new Div(new Span("No tienes pedidos aún."));

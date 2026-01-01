@@ -49,7 +49,7 @@ public class CocinaView extends VerticalLayout implements RouteGuard {
   private void refresh(OrderService orders) {
     list.removeAll();
 
-    var queue = orders.kitchenQueue();
+    var queue = orders.kitchenQueueWithItems();
     if (queue == null || queue.isEmpty()) {
       var empty = new Div(new Span("No hay pedidos en cola."));
       empty.addClassName("cocina-empty");
