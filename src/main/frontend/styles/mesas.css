@@ -267,14 +267,14 @@
   overflow-x: hidden;         /* ✅ clave */
 }
 
-/* Grid: auto-fit para adaptarse a cualquier ancho */
+/* Grid: 4 mesas por fila */
 .mesas-grid {
   width: 100% !important;
   max-width: 100% !important;
   box-sizing: border-box;
 
   display: grid !important;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
   gap: 14px;
   align-content: start;
 }
