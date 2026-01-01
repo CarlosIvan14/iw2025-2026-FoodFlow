@@ -18,7 +18,7 @@
 
   width: 100%;
   max-width: 100%;
-  height: 100vh;
+  min-height: 150vh;
 
   /* ✅ Scroll global de TODA la vista */
   overflow-y: auto;
@@ -377,14 +377,13 @@
 }
 
 /* ==============================
-   SECCIÓN DE PRODUCTOS - 50% ALTURA + SCROLL
+   SECCIÓN DE PRODUCTOS - SCROLL SOLO EN GRID
    ============================== */
 
 .ue-products-section {
-  min-height: 45vh;
-  max-height: 55vh !important;
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
+  min-height: 80vh;
+  max-height: 90vh !important;
+  overflow: hidden !important;
   
   display: flex;
   flex-direction: column;
@@ -396,11 +395,19 @@
   display: flex;
   flex-direction: column;
   width: 100%;
-  height: auto !important;
+  height: 100% !important;
   gap: 0.8rem;
+  overflow: hidden;
 }
 
-/* grid de productos */
+/* Título y búsqueda FIJOS */
+.ue-products-wrap .ue-section-top,
+.ue-products-wrap .ue-search {
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+/* grid de productos - SOLO AQUÍ EL SCROLL */
 .ue-products {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -408,6 +415,11 @@
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
+  
+  /* ✅ SCROLL SOLO EN EL GRID */
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .ue-product-card {
