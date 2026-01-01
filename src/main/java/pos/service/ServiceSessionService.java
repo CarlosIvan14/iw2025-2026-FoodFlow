@@ -27,7 +27,7 @@ public class ServiceSessionService {
     private final UserRepository userRepository;
 
     /**
-     * Abre uma sessão de serviço para uma mesa (Dine-in).
+     * Abre una sesión de servicio para una mesa (Dine-in).
      */
     public ServiceSession openSession(Long tableSpotId, Long waiterId) {
         try {
@@ -43,7 +43,7 @@ public class ServiceSessionService {
             User waiter = userRepository.findById(waiterId)
                     .orElseThrow(() -> new EntityNotFoundException("User (waiter) not found id=" + waiterId));
 
-            // Se quiser, dá pra validar o papel do usuário aqui (Role.WAITER)
+            // Si quieres, puedes validar el rol del usuario aquí (Role.WAITER)
             // if (waiter.getRole() != User.Role.WAITER) { ... }
 
             ServiceSession session = ServiceSession.builder()

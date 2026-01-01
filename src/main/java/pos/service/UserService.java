@@ -28,16 +28,16 @@ public class UserService {
             throw new IllegalArgumentException("Email already registered: " + user.getEmail());
         }
 
-        // Codificar a senha
+        // Codificar la contraseña
         user.setPassword(passwordEncoder.encode(user.getPassword()));
 
-        // Garantir que o usuário esteja ativo (mas não sobrescrever se já veio definido)
+        // Asegurar que el usuario esté activo (pero no sobrescribir si ya vino definido)
         if (user.getActive() == FALSE) {
             user.setActive(true);
         }
 
-        // NÃO definir role como CLIENT - usar o que veio do JSON
-        // user.setRole(Role.CLIENT); ← REMOVA ESTA LINHA
+        // NO definir role como CLIENT - usar lo que vino del JSON
+        // user.setRole(Role.CLIENT); ← ELIMINE ESTA LÍNEA
 
         return userRepository.save(user);
     }

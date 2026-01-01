@@ -116,7 +116,7 @@ public class TableSpotService {
         }
     }
 
-    /** Mudança rápida de estado: LIBRE / OCUPADA / RESERVADA */
+    /** Cambio rápido de estado: LIBRE / OCUPADA / RESERVADA */
     public TableSpot changeState(Long id, TableState state) {
         try {
             if (state == null) {

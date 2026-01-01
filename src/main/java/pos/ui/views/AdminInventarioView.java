@@ -104,7 +104,7 @@ public class AdminInventarioView extends VerticalLayout implements RouteGuard {
     add(header, grid);
   }
 
-  // Método auxiliar para atualizar a lista sem recarregar a página
+  // Método auxiliar para actualizar la lista sin recargar la página
   private void updateGrid() {
     grid.setItems(productService.list());
   }
@@ -250,7 +250,7 @@ public class AdminInventarioView extends VerticalLayout implements RouteGuard {
           showNotification("Producto creado correctamente", false);
         }
 
-        updateGrid(); // Atualiza a tabela
+        updateGrid(); // Actualiza la tabla
         dialog.close();
 
       } catch (Exception ex) {

@@ -11,12 +11,12 @@ import org.hibernate.annotations.Where;
 import java.math.BigDecimal;
 
 @Entity
-@Table(name = "producto") // O nome da tabela é 'producto'
+@Table(name = "producto") // El nombre de la tabla es 'producto'
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-// 1. Quando o repositório mandar deletar, o Hibernate vai executar este UPDATE:
+// 1. Cuando el repositorio mande eliminar, Hibernate va a ejecutar este UPDATE:
 @SQLDelete(sql = "UPDATE producto SET active = false WHERE id = ?")
 // 2. Toda vez que buscar produtos, traz apenas os que active = true
 @Where(clause = "active = true")
@@ -51,7 +51,7 @@ public class Product {
     @Column(name = "image_url", length = 500)
     private String imageUrl;
 
-    // 3. O campo que controla se está ativo ou não
+    // 3. El campo que controla si está activo o no
     @Column(name = "active", nullable = false)
     @Builder.Default
     private boolean active = true;

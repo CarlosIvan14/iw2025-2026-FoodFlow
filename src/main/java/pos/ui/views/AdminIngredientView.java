@@ -41,7 +41,7 @@ public class AdminIngredientView extends VerticalLayout implements RouteGuard {
         setAlignItems(Alignment.CENTER);
         setJustifyContentMode(JustifyContentMode.START);
 
-        // Cabeçalho
+        // Encabezado
         var title = new H2("Gestión de Ingredientes");
         title.addClassName("ingredients-title");
 

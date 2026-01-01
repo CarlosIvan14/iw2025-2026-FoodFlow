@@ -28,7 +28,7 @@ public class OrderItem {
 
     // 2. SNAPSHOT (O jeito do seu amigo):
     // Cópia do nome no momento da venda.
-    // Se o produto mudar de nome no futuro, o recibo antigo mantém o nome original.
+    // Si el producto cambia de nombre en el futuro, el recibo antiguo mantiene el nombre original.
     @Column(name = "product_name_snapshot", nullable = false)
     private String productName;
 

@@ -18,7 +18,7 @@ public class ServiceSessionController {
     private final ServiceSessionService serviceSessionService;
 
     /**
-     * Abre uma sessão de mesa (Dine-in).
+     * Abre una sesión de mesa (Dine-in).
      * Exemplo:
      *  POST /api/service-sessions/open?tableSpotId=1&waiterId=2
      */

@@ -86,7 +86,7 @@ public class AddressService {
     @Transactional(readOnly = true)
     public List<Address> listByUser(Long userId) {
         try {
-            // opcional: garantir que o usuário existe para retornar 404 mais semântico
+            // opcional: asegurar que el usuario existe para retornar 404 más semántico
             if (!userRepository.existsById(userId)) {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found id=" + userId);
             }

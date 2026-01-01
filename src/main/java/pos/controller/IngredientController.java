@@ -41,7 +41,7 @@ public class IngredientController {
 
     @PutMapping("/{id}")
     public ResponseEntity<Ingredient> update(@PathVariable Long id, @RequestBody @Valid Ingredient ingredient) {
-        // Força o ID da URL no objeto para garantir a atualização correta
+        // Fuerza el ID de la URL en el objeto para asegurar la actualización correcta
         ingredient.setId(id);
         try {
             Ingredient updated = service.save(ingredient);

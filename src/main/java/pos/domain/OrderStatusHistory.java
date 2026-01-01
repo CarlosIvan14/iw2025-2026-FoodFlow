@@ -33,7 +33,7 @@ public class OrderStatusHistory {
     @Column(name = "estado_nuevo", nullable = false, length = 30)
     private String newState;
 
-    // FK → usuario.id_usuario (quem fez a mudança)
+    // FK → usuario.id_usuario (quién hizo el cambio)
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "cambiado_por", nullable = false)
     @ToString.Exclude

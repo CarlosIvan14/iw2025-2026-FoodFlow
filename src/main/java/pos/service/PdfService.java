@@ -34,24 +34,24 @@ public class PdfService {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
             document.add(new Paragraph("Orden #" + order.getId()));
-            // MUDANÇA: Agora mostra Data e Hora
+            // CAMBIO: Ahora muestra Fecha y Hora
             document.add(new Paragraph("Fecha: " + LocalDateTime.now().format(formatter)));
 
-            // REMOVIDO: O bloco que mostrava o nome do cliente foi apagado.
+            // REMOVIDO: El bloque que mostraba el nombre del cliente fue eliminado.
 
             document.add(new Paragraph(" "));
 
-            // Tabela de Itens (Cabeçalhos em Espanhol)
-            PdfPTable table = new PdfPTable(3); // 3 colunas
+            // Tabla de Items (Encabezados en Español)
+            PdfPTable table = new PdfPTable(3); // 3 columnas
             table.setWidthPercentage(100);
 
-            // Estilizando o cabeçalho da tabela
+            // Estilizando el encabezado de la tabla
             Font fontHeader = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12);
             table.addCell(new Phrase("Producto", fontHeader));
             table.addCell(new Phrase("Cant.", fontHeader));
             table.addCell(new Phrase("Precio", fontHeader));
 
-            // Formatador de Moeda (Espanha/Euro)
+            // Formateador de Moneda (España/Euro)
             NumberFormat currency = NumberFormat.getCurrencyInstance(new Locale("es", "ES"));
 
             for (OrderItem item : order.getItems()) {
