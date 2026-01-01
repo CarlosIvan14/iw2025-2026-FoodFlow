@@ -86,24 +86,16 @@ public class DashboardMesasView extends VerticalLayout implements RouteGuard {
 
   private List<TableSpot> sortTablesByOrderPriority(List<TableSpot> tables, OrderService orders) {
     return tables.stream()
-        .sorted(Comparator.comparingInt(t -> getTablePriority(t, orders)))
+        .sorted(Comparator.comparing(t -> extractTableNumber(t.getCode())))
         .collect(Collectors.toList());
   }
 
-  private int getTablePriority(TableSpot table, OrderService orders) {
-    List<Order> activeOrders = orders.findActiveOrdersByTable(table.getId());
-    if (activeOrders.isEmpty()) return 5;
-
-    boolean hasListo = activeOrders.stream().anyMatch(o -> o.getStatus() == OrderStatus.LISTO);
-    boolean hasInPreparation = activeOrders.stream().anyMatch(o -> o.getStatus() == OrderStatus.IN_PREPARATION);
-    boolean hasPending = activeOrders.stream().anyMatch(o -> o.getStatus() == OrderStatus.PENDING);
-    boolean hasPagado = activeOrders.stream().anyMatch(o -> o.getStatus() == OrderStatus.PAGADO);
-
-    if (hasListo) return 0;
-    if (hasInPreparation) return 1;
-    if (hasPending) return 2;
-    if (hasPagado) return 3;
-    return 4;
+  private String extractTableNumber(String code) {
+    if (code == null) return "ZZZ";
+    // Extraer números del código (ej: "M1" -> "1", "Mesa 2" -> "2")
+    String nums = code.replaceAll("[^0-9]", "");
+    // Rellenar con ceros a la izquierda para ordenamiento numérico
+    return nums.isEmpty() ? code : String.format("%010d", Integer.parseInt(nums));
   }
 
   private Button createTableButton(TableSpot t, OrderService orders) {
