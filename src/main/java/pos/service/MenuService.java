@@ -18,7 +18,7 @@ public class MenuService {
         return productRepository.findAll();
     }
 
-    public List<Product> byCategory(String category) {
+    public List<Product> byCategory(pos.domain.Category category) {
         return productRepository.findByCategory(category);
     }
 }

@@ -1,5 +1,6 @@
 package pos.ui.views;
 
+import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dialog.Dialog;
@@ -21,9 +22,11 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import org.springframework.web.multipart.MultipartFile;
 import pos.auth.RouteGuard;
+import pos.domain.Category;
 import pos.domain.Product;
 import pos.ui.MainLayout;
 import pos.service.ProductService;
+import pos.service.CategoryService;
 import pos.service.S3ImageUploadService;
 
 @PageTitle("Productos")
@@ -32,11 +35,13 @@ import pos.service.S3ImageUploadService;
 public class AdminInventarioView extends VerticalLayout implements RouteGuard {
 
   private final ProductService productService;
+  private final CategoryService categoryService;
   private final S3ImageUploadService s3ImageUploadService;
   private final Grid<Product> grid;
 
-  public AdminInventarioView(ProductService productService, S3ImageUploadService s3ImageUploadService) {
+  public AdminInventarioView(ProductService productService, CategoryService categoryService, S3ImageUploadService s3ImageUploadService) {
     this.productService = productService;
+    this.categoryService = categoryService;
     this.s3ImageUploadService = s3ImageUploadService;
 
     addClassName("inventario-view");
@@ -49,7 +54,6 @@ public class AdminInventarioView extends VerticalLayout implements RouteGuard {
     var title = new H2("Gestión de Productos");
     title.addClassName("inventario-title");
 
-    // Botão de Adicionar (Passamos 'null' para indicar que é um novo produto)
     var addBtn = new Button("Agregar Producto", VaadinIcon.PLUS.create());
     addBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
     addBtn.addClickListener(e -> showProductDialog(null));
@@ -61,12 +65,10 @@ public class AdminInventarioView extends VerticalLayout implements RouteGuard {
     header.getStyle().set("align-items", "center");
     header.getStyle().set("width", "100%");
 
-    // Configuração da Grid
     grid = new Grid<>(Product.class, false);
     grid.addClassName("inventario-grid");
     grid.addColumn(Product::getId).setHeader("ID").setAutoWidth(true).setFlexGrow(0);
     
-    // Columna de imagen
     grid.addComponentColumn(product -> {
       if (product.getImageUrl() != null && !product.getImageUrl().isBlank()) {
         var img = new Image(product.getImageUrl(), product.getName());
@@ -80,18 +82,15 @@ public class AdminInventarioView extends VerticalLayout implements RouteGuard {
     
     grid.addColumn(Product::getName).setHeader("Producto");
     grid.addColumn(Product::getPrice).setHeader("Precio");
-    grid.addColumn(Product::getCategory).setHeader("Categoría").setAutoWidth(true);
+    grid.addColumn(p -> p.getCategory() != null ? p.getCategory().getNombre() : "Sin categoría").setHeader("Categoría").setAutoWidth(true);
     grid.addColumn(Product::getStock).setHeader("Stock").setAutoWidth(true);
 
-    // --- NOVA COLUNA DE AÇÕES (EDITAR E DELETAR) ---
     grid.addComponentColumn(product -> {
 
-      // Botão Editar
       Button editBtn = new Button(VaadinIcon.EDIT.create());
       editBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
       editBtn.addClickListener(e -> showProductDialog(product));
 
-      // Botão Deletar
       Button deleteBtn = new Button(VaadinIcon.TRASH.create());
       deleteBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_ERROR);
       deleteBtn.addClickListener(e -> showDeleteConfirmation(product));
@@ -99,17 +98,15 @@ public class AdminInventarioView extends VerticalLayout implements RouteGuard {
       return new HorizontalLayout(editBtn, deleteBtn);
     }).setHeader("Acciones");
 
-    updateGrid(); // Carrega os dados iniciais
+    updateGrid();
 
     add(header, grid);
   }
 
-  // Método auxiliar para actualizar la lista sin recargar la página
   private void updateGrid() {
     grid.setItems(productService.list());
   }
 
-  // Lógica unificada para Criar e Editar
   private void showProductDialog(Product productToEdit) {
     Dialog dialog = new Dialog();
     boolean isEditMode = productToEdit != null;
@@ -118,10 +115,13 @@ public class AdminInventarioView extends VerticalLayout implements RouteGuard {
 
     var nameField = new TextField("Nombre");
     var priceField = new BigDecimalField("Precio");
-    var categoryField = new TextField("Categoría");
+    
+    ComboBox<Category> categoryField = new ComboBox<>("Categoría");
+    categoryField.setItems(categoryService.list());
+    categoryField.setItemLabelGenerator(Category::getNombre);
+    
     var stockField = new IntegerField("Stock");
 
-    // Sección de imagen
     var imagePreview = new Image();
     imagePreview.setWidth("150px");
     imagePreview.setHeight("150px");
@@ -131,20 +131,17 @@ public class AdminInventarioView extends VerticalLayout implements RouteGuard {
     imageSection.addClassName("image-section");
     imageSection.getStyle().set("margin-bottom", "16px");
     
-    // Upload de imagen
     MemoryBuffer buffer = new MemoryBuffer();
     Upload upload = new Upload(buffer);
     upload.setAcceptedFileTypes("image/jpeg", "image/png", "image/webp", "image/gif");
-    upload.setMaxFileSize(5 * 1024 * 1024); // 5MB máximo
+    upload.setMaxFileSize(5 * 1024 * 1024);
     upload.setDropLabel(new com.vaadin.flow.component.html.Span("Arrastra una imagen aquí o haz clic para seleccionar"));
     
-    // Tracer de si se subió una NUEVA imagen (diferente de la anterior)
     final String[] uploadedImageUrl = {null};
     final boolean[] newImageUploaded = {false};
     
     upload.addSucceededListener(event -> {
       try {
-        // Convertir bytes del buffer a MultipartFile
         byte[] fileBytes = buffer.getInputStream().readAllBytes();
         
         MultipartFile mf = new MultipartFile() {
@@ -188,7 +185,6 @@ public class AdminInventarioView extends VerticalLayout implements RouteGuard {
           .addThemeVariants(NotificationVariant.LUMO_ERROR);
     });
 
-    // Se for edição, preenchemos os campos com os dados atuais
     if (isEditMode) {
       nameField.setValue(productToEdit.getName());
       priceField.setValue(productToEdit.getPrice());
@@ -200,28 +196,23 @@ public class AdminInventarioView extends VerticalLayout implements RouteGuard {
         uploadedImageUrl[0] = productToEdit.getImageUrl();
       }
     } else {
-      stockField.setValue(0); // Valor padrão para novos
+      stockField.setValue(0);
       imagePreview.setSrc("images/placeholder-food.png");
     }
 
     var saveBtn = new Button("Guardar", e -> {
       if (nameField.isEmpty() || priceField.isEmpty() || categoryField.isEmpty()) {
-        Notification.show("Por favor complete todos los campos mandatory.");
+        Notification.show("Por favor complete todos los campos obligatorios.");
         return;
       }
 
-      // Determinar la URL final de imagen
       String finalImageUrl = null;
       if (newImageUploaded[0] && uploadedImageUrl[0] != null) {
-        // Se subió una nueva imagen
         finalImageUrl = uploadedImageUrl[0];
       } else if (isEditMode) {
-        // En edición, mantener la imagen anterior si no se subió nueva
         finalImageUrl = productToEdit.getImageUrl();
       }
-      // Si es creación y no se subió imagen, finalImageUrl queda null
 
-      // Cria o objeto (ou usa o builder para atualizar os dados)
       var p = Product.builder()
               .name(nameField.getValue())
               .price(priceField.getValue())
@@ -232,7 +223,6 @@ public class AdminInventarioView extends VerticalLayout implements RouteGuard {
 
       try {
         if (isEditMode) {
-          // Si se subió una nueva imagen y había una anterior diferente, eliminarla de S3
           if (newImageUploaded[0] && productToEdit.getImageUrl() != null && 
               !productToEdit.getImageUrl().equals(uploadedImageUrl[0])) {
             try {
@@ -241,16 +231,14 @@ public class AdminInventarioView extends VerticalLayout implements RouteGuard {
               System.err.println("Aviso: No se pudo eliminar imagen anterior: " + ex.getMessage());
             }
           }
-          // Se for edição, chamamos o update passando o ID original
           productService.update(productToEdit.getId(), p);
           showNotification("Producto actualizado correctamente", false);
         } else {
-          // Se for novo, chamamos o create
           productService.create(p);
           showNotification("Producto creado correctamente", false);
         }
 
-        updateGrid(); // Actualiza la tabla
+        updateGrid();
         dialog.close();
 
       } catch (Exception ex) {
@@ -261,7 +249,6 @@ public class AdminInventarioView extends VerticalLayout implements RouteGuard {
 
     var cancelBtn = new Button("Cancelar", e -> dialog.close());
 
-    // Preparar sección de imagen
     imageSection.add(imagePreview, upload);
     
     var layout = new VerticalLayout(imageSection, nameField, priceField, categoryField, stockField);
@@ -276,7 +263,6 @@ public class AdminInventarioView extends VerticalLayout implements RouteGuard {
     dialog.open();
   }
 
-  // Diálogo de confirmação para exclusão
   private void showDeleteConfirmation(Product product) {
     Dialog dialog = new Dialog();
     dialog.setHeaderTitle("Confirmar eliminación");

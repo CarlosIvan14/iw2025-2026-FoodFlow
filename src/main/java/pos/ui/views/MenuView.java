@@ -134,7 +134,7 @@ public class MenuView extends VerticalLayout implements RouteGuard {
         List<Product> filtered = all.stream()
             .filter(p -> {
               String name = p.getName() != null ? p.getName().toLowerCase() : "";
-              String category = p.getCategory() != null ? p.getCategory().toLowerCase() : "";
+              String category = p.getCategory() != null ? p.getCategory().getNombre().toLowerCase() : "";
               return name.contains(q) || category.contains(q);
             })
             .collect(java.util.stream.Collectors.toList());
@@ -184,7 +184,7 @@ public class MenuView extends VerticalLayout implements RouteGuard {
                       .set("font-weight", "600")
                       .set("font-size", "1rem");
 
-              var categoryBadge = new Span(product.getCategory());
+              var categoryBadge = new Span(product.getCategory() != null ? product.getCategory().getNombre() : "Sin categoría");
               categoryBadge.addClassName("category-badge");
               categoryBadge.getStyle()
                       .set("background-color", "var(--lumo-contrast-10pct)")

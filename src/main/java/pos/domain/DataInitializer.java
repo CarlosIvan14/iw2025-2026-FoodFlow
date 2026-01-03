@@ -10,7 +10,10 @@ import pos.repository.TableRepository;
 public class DataInitializer {
 
     @Bean
-    public CommandLineRunner initData(TableRepository tableRepository, pos.repository.UserRepository userRepository, org.springframework.security.crypto.password.PasswordEncoder passwordEncoder) {
+    public CommandLineRunner initData(TableRepository tableRepository, 
+                                     pos.repository.UserRepository userRepository,
+                                     pos.repository.CategoryRepository categoryRepository,
+                                     org.springframework.security.crypto.password.PasswordEncoder passwordEncoder) {
         return args -> {
             if (tableRepository.count() == 0) {
                 tableRepository.save(TableSpot.builder().code("Mesa 1").capacity(4).build());
@@ -29,6 +32,26 @@ public class DataInitializer {
                     .active(true)
                     .build());
                 System.out.println("👉 Usuario 'german del rio' creado (email: german@test.com, pass: password).");
+            }
+
+            if (categoryRepository.count() == 0) {
+                categoryRepository.save(Category.builder()
+                    .nombre("Entrada")
+                    .descripcion("Platos de entrada y aperitivos")
+                    .build());
+                categoryRepository.save(Category.builder()
+                    .nombre("Plato Principal")
+                    .descripcion("Platos principales y segundos")
+                    .build());
+                categoryRepository.save(Category.builder()
+                    .nombre("Postre")
+                    .descripcion("Postres y dulces")
+                    .build());
+                categoryRepository.save(Category.builder()
+                    .nombre("Bebida")
+                    .descripcion("Bebidas frías y calientes")
+                    .build());
+                System.out.println("👉 Se crearon 4 categorías por defecto (Entrada, Plato Principal, Postre, Bebida).");
             }
         };
     }

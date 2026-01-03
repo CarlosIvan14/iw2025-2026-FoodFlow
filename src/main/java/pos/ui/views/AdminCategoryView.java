@@ -2,7 +2,6 @@ package pos.ui.views;
 
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
-import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Div;
@@ -12,68 +11,61 @@ import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.textfield.BigDecimalField;
-import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import pos.auth.RouteGuard;
-import pos.domain.Ingredient;
-import pos.service.IngredientService;
+import pos.domain.Category;
+import pos.service.CategoryService;
 import pos.ui.MainLayout;
 
-@PageTitle("Ingredientes")
-@Route(value = "admin/ingredientes", layout = MainLayout.class)
+@PageTitle("Categorías")
+@Route(value = "admin/categorias", layout = MainLayout.class)
 @pos.auth.RequiredRoles(pos.domain.Role.ADMIN)
-public class AdminIngredientView extends VerticalLayout implements RouteGuard {
+public class AdminCategoryView extends VerticalLayout implements RouteGuard {
 
-    private final IngredientService service;
-    private final Grid<Ingredient> grid;
+    private final CategoryService service;
+    private final Grid<Category> grid;
 
-    public AdminIngredientView(IngredientService service) {
+    public AdminCategoryView(CategoryService service) {
         this.service = service;
 
-        addClassName("ingredients-view");
+        addClassName("categories-view");
         setSizeFull();
         setPadding(true);
         setSpacing(true);
         setAlignItems(Alignment.CENTER);
         setJustifyContentMode(JustifyContentMode.START);
 
-        // Encabezado
-        var title = new H2("Gestión de Ingredientes");
-        title.addClassName("ingredients-title");
+        var title = new H2("Administrar Categorías de Productos");
+        title.addClassName("categories-title");
 
-        var addBtn = new Button("Nuevo Ingrediente", VaadinIcon.PLUS.create());
+        var addBtn = new Button("Nueva Categoría", VaadinIcon.PLUS.create());
         addBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         addBtn.addClickListener(e -> showDialog(null));
 
         var header = new Div(title, addBtn);
-        header.addClassName("ingredients-header");
+        header.addClassName("categories-header");
         header.getStyle().set("display", "flex");
         header.getStyle().set("justify-content", "space-between");
         header.getStyle().set("align-items", "center");
         header.getStyle().set("width", "100%");
 
-        // Grid
-        grid = new Grid<>(Ingredient.class, false);
-        grid.addClassName("ingredients-grid");
-        grid.addColumn(Ingredient::getId).setHeader("ID").setAutoWidth(true).setFlexGrow(0);
-        grid.addColumn(Ingredient::getNombre).setHeader("Nombre");
-        grid.addColumn(Ingredient::getUnidad).setHeader("Unidad").setAutoWidth(true);
-        grid.addColumn(Ingredient::getStockActual).setHeader("Stock").setAutoWidth(true);
-        grid.addColumn(i -> "€ " + i.getCostoUnitario()).setHeader("Costo Unit.").setAutoWidth(true);
+        grid = new Grid<>(Category.class, false);
+        grid.addClassName("categories-grid");
+        grid.addColumn(Category::getId).setHeader("ID").setAutoWidth(true).setFlexGrow(0);
+        grid.addColumn(Category::getNombre).setHeader("Nombre");
+        grid.addColumn(Category::getDescripcion).setHeader("Descripción");
 
-        // Coluna de Ações
-        grid.addComponentColumn(ingredient -> {
+        grid.addComponentColumn(category -> {
             Button editBtn = new Button(VaadinIcon.EDIT.create());
             editBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
-            editBtn.addClickListener(e -> showDialog(ingredient));
+            editBtn.addClickListener(e -> showDialog(category));
 
             Button deleteBtn = new Button(VaadinIcon.TRASH.create());
             deleteBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_ERROR);
-            deleteBtn.addClickListener(e -> showDeleteConfirmation(ingredient));
+            deleteBtn.addClickListener(e -> showDeleteConfirmation(category));
 
             return new HorizontalLayout(editBtn, deleteBtn);
         }).setHeader("Acciones");
@@ -86,51 +78,44 @@ public class AdminIngredientView extends VerticalLayout implements RouteGuard {
         grid.setItems(service.list());
     }
 
-    private void showDialog(Ingredient ingredientToEdit) {
+    private void showDialog(Category categoryToEdit) {
         Dialog dialog = new Dialog();
-        boolean isEdit = ingredientToEdit != null;
-        dialog.setHeaderTitle(isEdit ? "Editar Ingrediente" : "Nuevo Ingrediente");
+        boolean isEdit = categoryToEdit != null;
+        dialog.setHeaderTitle(isEdit ? "Editar Categoría" : "Nueva Categoría");
 
-        // Campos
         TextField nameField = new TextField("Nombre");
-        nameField.setPlaceholder("Ej: Harina, Tomate...");
+        nameField.setPlaceholder("Ej: Bebidas, Postres...");
 
-        ComboBox<String> unitField = new ComboBox<>("Unidad");
-        unitField.setItems("kg", "gr", "L", "ml", "unidad", "paquete");
+        TextField descriptionField = new TextField("Descripción");
+        descriptionField.setPlaceholder("Breve descripción de la categoría");
 
-        NumberField stockField = new NumberField("Stock Actual");
-        BigDecimalField costField = new BigDecimalField("Costo Unitario (€)");
-
-        // Preencher se for edição
         if (isEdit) {
-            nameField.setValue(ingredientToEdit.getNombre());
-            unitField.setValue(ingredientToEdit.getUnidad());
-            stockField.setValue(ingredientToEdit.getStockActual());
-            costField.setValue(ingredientToEdit.getCostoUnitario());
-        } else {
-            stockField.setValue(0.0);
+            nameField.setValue(categoryToEdit.getNombre());
+            descriptionField.setValue(categoryToEdit.getDescripcion() != null ? categoryToEdit.getDescripcion() : "");
         }
 
-        // Botões
         Button saveBtn = new Button("Guardar", e -> {
-            if (nameField.isEmpty() || unitField.isEmpty() || stockField.isEmpty() || costField.isEmpty()) {
-                showNotification("Todos los campos son obligatorios", true);
+            if (nameField.isEmpty()) {
+                showNotification("El nombre es obligatorio", true);
                 return;
             }
 
-            Ingredient ing = Ingredient.builder()
-                    .id(isEdit ? ingredientToEdit.getId() : null)
+            Category cat = Category.builder()
+                    .id(isEdit ? categoryToEdit.getId() : null)
                     .nombre(nameField.getValue())
-                    .unidad(unitField.getValue())
-                    .stockActual(stockField.getValue())
-                    .costoUnitario(costField.getValue())
+                    .descripcion(descriptionField.getValue())
                     .build();
 
             try {
-                service.save(ing);
+                if (isEdit) {
+                    service.update(categoryToEdit.getId(), cat);
+                    showNotification("Categoría actualizada correctamente", false);
+                } else {
+                    service.create(cat);
+                    showNotification("Categoría creada correctamente", false);
+                }
                 updateGrid();
                 dialog.close();
-                showNotification(isEdit ? "Ingrediente actualizado correctamente" : "Ingrediente creado correctamente", false);
             } catch (ObjectOptimisticLockingFailureException ex) {
                 showNotification("Error: Alguien modificó este dato. Actualice la página.", true);
             } catch (Exception ex) {
@@ -141,24 +126,23 @@ public class AdminIngredientView extends VerticalLayout implements RouteGuard {
 
         Button cancelBtn = new Button("Cancelar", e -> dialog.close());
 
-        VerticalLayout layout = new VerticalLayout(nameField, unitField, stockField, costField);
+        VerticalLayout layout = new VerticalLayout(nameField, descriptionField);
         HorizontalLayout buttons = new HorizontalLayout(saveBtn, cancelBtn);
 
         dialog.add(layout, buttons);
         dialog.open();
     }
 
-    // Diálogo de confirmação para exclusão
-    private void showDeleteConfirmation(Ingredient ingredient) {
+    private void showDeleteConfirmation(Category category) {
         Dialog dialog = new Dialog();
         dialog.setHeaderTitle("Confirmar eliminación");
-        dialog.add("¿Estás seguro de que deseas eliminar '" + ingredient.getNombre() + "'?");
+        dialog.add("¿Estás seguro de que deseas eliminar '" + category.getNombre() + "'?");
 
         Button confirmBtn = new Button("Eliminar", e -> {
             try {
-                service.delete(ingredient.getId());
+                service.delete(category.getId());
                 updateGrid();
-                showNotification("Ingrediente eliminado", false);
+                showNotification("Categoría eliminada", false);
                 dialog.close();
             } catch (Exception ex) {
                 showNotification("Error al eliminar: " + ex.getMessage(), true);

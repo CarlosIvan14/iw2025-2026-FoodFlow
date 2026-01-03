@@ -35,9 +35,9 @@ public class Product {
     @Column(name = "descripcion", columnDefinition = "text")
     private String description;
 
-    @NotBlank
-    @Column(name = "categoria", length = 50)
-    private String category;
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "categoria_id")
+    private Category category;
 
     @DecimalMin(value = "0.0", inclusive = true)
     @Column(name = "precio", nullable = false, precision = 12, scale = 2)
