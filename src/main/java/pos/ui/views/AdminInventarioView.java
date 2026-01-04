@@ -56,6 +56,7 @@ public class AdminInventarioView extends VerticalLayout implements RouteGuard {
 
     var addBtn = new Button("Agregar Producto", VaadinIcon.PLUS.create());
     addBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+    addBtn.getElement().setProperty("title", "Crea un nuevo producto en el catálogo");
     addBtn.addClickListener(e -> showProductDialog(null));
 
     var header = new Div(title, addBtn);
@@ -89,10 +90,12 @@ public class AdminInventarioView extends VerticalLayout implements RouteGuard {
 
       Button editBtn = new Button(VaadinIcon.EDIT.create());
       editBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+      editBtn.getElement().setProperty("title", "Edita los detalles de este producto");
       editBtn.addClickListener(e -> showProductDialog(product));
 
       Button deleteBtn = new Button(VaadinIcon.TRASH.create());
       deleteBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_ERROR);
+      deleteBtn.getElement().setProperty("title", "Elimina este producto de forma permanente");
       deleteBtn.addClickListener(e -> showDeleteConfirmation(product));
 
       return new HorizontalLayout(editBtn, deleteBtn);
@@ -114,13 +117,21 @@ public class AdminInventarioView extends VerticalLayout implements RouteGuard {
     dialog.setHeaderTitle(isEditMode ? "Editar Producto" : "Agregar Nuevo Producto");
 
     var nameField = new TextField("Nombre");
+    nameField.setPlaceholder("Ej: Hamburguesa clásica");
+    nameField.setHelperText("Nombre del producto que verán los clientes");
+    
     var priceField = new BigDecimalField("Precio");
+    priceField.setPlaceholder("Ej: 12.50");
+    priceField.setHelperText("Precio en la moneda actual");
     
     ComboBox<Category> categoryField = new ComboBox<>("Categoría");
     categoryField.setItems(categoryService.list());
     categoryField.setItemLabelGenerator(Category::getNombre);
+    categoryField.setHelperText("Selecciona la categoría del producto");
     
     var stockField = new IntegerField("Stock");
+    stockField.setPlaceholder("Ej: 100");
+    stockField.setHelperText("Cantidad disponible en inventario");
 
     var imagePreview = new Image();
     imagePreview.setWidth("150px");
@@ -246,8 +257,10 @@ public class AdminInventarioView extends VerticalLayout implements RouteGuard {
       }
     });
     saveBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+    saveBtn.getElement().setProperty("title", "Guarda los cambios del producto");
 
     var cancelBtn = new Button("Cancelar", e -> dialog.close());
+    cancelBtn.getElement().setProperty("title", "Cancela sin guardar los cambios");
 
     imageSection.add(imagePreview, upload);
     

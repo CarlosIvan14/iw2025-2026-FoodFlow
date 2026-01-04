@@ -43,6 +43,7 @@ public class AdminCategoryView extends VerticalLayout implements RouteGuard {
 
         var addBtn = new Button("Nueva Categoría", VaadinIcon.PLUS.create());
         addBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        addBtn.getElement().setProperty("title", "Crea una nueva categoría de productos");
         addBtn.addClickListener(e -> showDialog(null));
 
         var header = new Div(title, addBtn);
@@ -61,10 +62,12 @@ public class AdminCategoryView extends VerticalLayout implements RouteGuard {
         grid.addComponentColumn(category -> {
             Button editBtn = new Button(VaadinIcon.EDIT.create());
             editBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+            editBtn.getElement().setProperty("title", "Edita los detalles de esta categoría");
             editBtn.addClickListener(e -> showDialog(category));
 
             Button deleteBtn = new Button(VaadinIcon.TRASH.create());
             deleteBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_ERROR);
+            deleteBtn.getElement().setProperty("title", "Elimina esta categoría de forma permanente");
             deleteBtn.addClickListener(e -> showDeleteConfirmation(category));
 
             return new HorizontalLayout(editBtn, deleteBtn);
@@ -85,9 +88,11 @@ public class AdminCategoryView extends VerticalLayout implements RouteGuard {
 
         TextField nameField = new TextField("Nombre");
         nameField.setPlaceholder("Ej: Bebidas, Postres...");
+        nameField.setHelperText("Nombre único de la categoría");
 
         TextField descriptionField = new TextField("Descripción");
         descriptionField.setPlaceholder("Breve descripción de la categoría");
+        descriptionField.setHelperText("Detalles adicionales sobre la categoría");
 
         if (isEdit) {
             nameField.setValue(categoryToEdit.getNombre());
@@ -123,8 +128,10 @@ public class AdminCategoryView extends VerticalLayout implements RouteGuard {
             }
         });
         saveBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        saveBtn.getElement().setProperty("title", "Guarda los cambios de la categoría");
 
         Button cancelBtn = new Button("Cancelar", e -> dialog.close());
+        cancelBtn.getElement().setProperty("title", "Cancela sin guardar los cambios");
 
         VerticalLayout layout = new VerticalLayout(nameField, descriptionField);
         HorizontalLayout buttons = new HorizontalLayout(saveBtn, cancelBtn);
