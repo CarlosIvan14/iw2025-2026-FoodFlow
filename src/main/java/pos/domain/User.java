@@ -36,7 +36,7 @@ public class User {
 
     @NotBlank
     @Size(max = 255)
-    @Column(name = "contraseña", nullable = false, length = 255)
+    @Column(name = "contrasena", nullable = false, length = 255)
     private String passwordHash;
 
     @Enumerated(EnumType.STRING)
