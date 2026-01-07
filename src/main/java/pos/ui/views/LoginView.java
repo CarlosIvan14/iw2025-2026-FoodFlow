@@ -38,6 +38,9 @@ public class LoginView extends VerticalLayout implements RouteGuard {
         // Traducción básica al español
         login.setI18n(createSpanishI18n());
 
+        // No usamos recuperación de contraseña (por ahora)
+        login.setForgotPasswordButtonVisible(false);
+
         add(login);
         add(new RouterLink("¿No tienes cuenta? Regístrate aquí", RegisterView.class));
     }
@@ -56,7 +59,6 @@ public class LoginView extends VerticalLayout implements RouteGuard {
         i18n.getForm().setUsername("Correo");
         i18n.getForm().setPassword("Contraseña");
         i18n.getForm().setSubmit("Entrar");
-        i18n.getForm().setForgotPassword("Olvidé mi contraseña");
         i18n.getErrorMessage().setTitle("Error de acceso");
         i18n.getErrorMessage().setMessage("Correo o contraseña incorrectos");
         

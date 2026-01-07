@@ -11,6 +11,7 @@ import com.vaadin.flow.component.textfield.EmailField;
 import com.vaadin.flow.component.textfield.PasswordField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
+import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
@@ -24,6 +25,7 @@ import pos.service.UserService;
 
 @PageTitle("Registro")
 @Route(value = "register")
+@CssImport("./styles/login.css")
 @AnonymousAllowed
 public class RegisterView extends VerticalLayout implements BeforeEnterObserver {
 
@@ -35,6 +37,7 @@ public class RegisterView extends VerticalLayout implements BeforeEnterObserver 
         this.userService = userService;
         this.authService = authService;
 
+        addClassName("login-view");
         setSizeFull();
         setAlignItems(Alignment.CENTER);
         setJustifyContentMode(JustifyContentMode.CENTER);
@@ -86,11 +89,13 @@ public class RegisterView extends VerticalLayout implements BeforeEnterObserver 
             }
         });
         registerButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        registerButton.setWidthFull();
 
         FormLayout form = new FormLayout();
         form.add(name, email, password, confirmPassword);
         form.setResponsiveSteps(new FormLayout.ResponsiveStep("0", 1));
         form.setMaxWidth("400px");
+        form.setWidthFull();
 
         // Card container para centrar y dar estilo similar al LoginView
         var card = new Div();
@@ -100,9 +105,16 @@ public class RegisterView extends VerticalLayout implements BeforeEnterObserver 
             .set("padding", "24px")
             .set("border-radius", "8px")
             .set("box-shadow", "0 6px 18px rgba(0,0,0,0.08)")
-            .set("max-width", "440px");
+            .set("max-width", "400px")
+            .set("width", "100%");
 
-        card.add(title, form, registerButton, new RouterLink("¿Ya tienes cuenta? Inicia sesión", LoginView.class));
+        RouterLink loginLink = new RouterLink("¿Ya tienes cuenta? Inicia sesión", LoginView.class);
+        loginLink.getElement().getStyle()
+                .set("display", "block")
+                .set("text-align", "center")
+                .set("margin-top", "10px");
+
+        card.add(title, form, registerButton, loginLink);
 
         add(card);
     }
