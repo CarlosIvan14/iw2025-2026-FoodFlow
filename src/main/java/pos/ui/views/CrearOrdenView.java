@@ -697,9 +697,9 @@ public class CrearOrdenView extends VerticalLayout implements RouteGuard {
 
       try {
         if (editingOrderId != null) {
-          orders.addItemsToOrder(editingOrderId, items);
+          orders.updateOrderItems(editingOrderId, items);
 
-          Notification.show("Items agregados al pedido", 3000, Notification.Position.TOP_CENTER)
+          Notification.show("Pedido actualizado correctamente", 3000, Notification.Position.TOP_CENTER)
               .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
 
           com.vaadin.flow.component.UI.getCurrent().navigate("mesas");

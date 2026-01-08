@@ -367,6 +367,69 @@ public class OrderService {
     }
 
     /**
+     * Reemplaza TODOS los items de un pedido existente
+     * (elimina viejos y agrega nuevos)
+     */
+    @Transactional
+    public void updateOrderItems(Long orderId, List<OrderItem> newItems) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new EntityNotFoundException("Order not found id=" + orderId));
+
+        // Eliminar items viejos y devolver stock
+        for (OrderItem oldItem : new java.util.ArrayList<>(order.getItems())) {
+            if (oldItem.getProduct() != null && oldItem.getQuantity() > 0) {
+                Product p = oldItem.getProduct();
+                p.setStock(p.getStock() + oldItem.getQuantity());
+                productRepository.save(p);
+            }
+            order.getItems().remove(oldItem);
+        }
+
+        // Agregar items nuevos
+        BigDecimal newTotal = BigDecimal.ZERO;
+
+        for (OrderItem newItem : newItems) {
+            Long prodId = newItem.getProduct().getId();
+
+            Product dbProduct = productRepository.findById(prodId)
+                    .orElseThrow(() -> new EntityNotFoundException("Producto no encontrado ID: " + prodId));
+
+            int quantityToAdd = newItem.getQuantity();
+
+            // Verificar stock
+            if (dbProduct.getStock() < quantityToAdd) {
+                throw new RuntimeException("Stock insuficiente para: " + dbProduct.getName()
+                        + ". Disponível: " + dbProduct.getStock() + ", Solicitado: " + quantityToAdd);
+            }
+
+            // Decrementar stock
+            dbProduct.setStock(dbProduct.getStock() - quantityToAdd);
+            productRepository.save(dbProduct);
+
+            // Crear nuevo item
+            OrderItem item = OrderItem.builder()
+                    .order(order)
+                    .product(dbProduct)
+                    .productName(dbProduct.getName())
+                    .unitPrice(dbProduct.getPrice())
+                    .quantity(quantityToAdd)
+                    .comment(newItem.getComment())
+                    .build();
+
+            order.getItems().add(item);
+
+            // Acumular al total
+            BigDecimal itemTotal = dbProduct.getPrice()
+                    .multiply(BigDecimal.valueOf(quantityToAdd));
+            newTotal = newTotal.add(itemTotal);
+        }
+
+        order.setTotal(newTotal);
+        orderRepository.save(order);
+        log.info("Items reemplazados en pedido #{}. Total nuevo: {}", orderId, newTotal);
+    }
+
+    /**
      * Crear pedido para llevar (sin mesa, para cliente)
      */
     public Order createCarryOutOrder(List<OrderItem> items, Long userId) {
